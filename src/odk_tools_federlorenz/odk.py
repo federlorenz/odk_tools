@@ -97,12 +97,24 @@ class ODK():
         self.project_name = project_name
         self.form_name = form_name
 
+    def list_projects(self):
+        req = requests.get(self.url+'/v1/projects', headers=self.headers)
+        projects = [req.json()[i]["name"] for i in range(len(req.json()))]
+        return projects
+
     def get_project(self):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
         project = [req.json()[i]["id"] for i in range(len(req.json()))
                 if req.json()[i]["name"] == self.project_name][0]
     
         return project
+
+    def list_forms(self):
+
+        req = requests.get(self.url+'/v1/projects/' +
+                           str(self.get_project())+"/forms", headers=self.headers)
+        forms = [req.json()[i]["name"] for i in range(len(req.json()))]
+        return forms
 
     def get_form(self):
 
