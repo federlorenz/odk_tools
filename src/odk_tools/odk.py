@@ -110,9 +110,11 @@ class ODK():
         return project
 
     def list_forms(self,project):
-
+        req = requests.get(self.url+'/v1/projects', headers=self.headers)
+        project = [req.json()[i]["id"] for i in range(len(req.json()))
+                   if req.json()[i]["name"] == project][0]
         req = requests.get(self.url+'/v1/projects/' +
-                           project+"/forms", headers=self.headers)
+                           str(project)+"/forms", headers=self.headers)
         forms = [req.json()[i]["name"] for i in range(len(req.json()))]
         return forms
 
