@@ -12,6 +12,7 @@ import xlsxwriter
 import xml.etree.ElementTree as ET
 import uuid
 from types import FunctionType
+from classes import Form
 
 def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True):
 
@@ -397,6 +398,18 @@ class ODK():
                             repeats[j][i], format="%H:%M:%S.%f%z").dt.time
 
         return repeats
+
+    def process_all(self,form_name,variable='',time_variable='starttime'):
+
+        submissions = self.processing_submission()
+        survey = self.survey().dropna(how='all')
+        choices = self.choices()
+        repeats = self.processing_repeats()
+        survey_name = form_name
+        variable = variable
+        time_variable = time_variable
+
+        return Form(submissions,survey,choices,repeats,survey_name,variable,time_variable)
 
     def save_main(self,data=None,path=""):
 
