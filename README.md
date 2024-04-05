@@ -11,7 +11,7 @@ pip install odk-tools
 
 ## User details 
 
-Website: [cleanairodk.org](cleanairodk.org)
+Website: [cleanairodk.org](www.cleanairodk.org)
 
 username: your_username@cleanairodk.org 
 
