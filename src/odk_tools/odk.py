@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 import uuid
 from types import FunctionType
 from .classes import Form
+from getpass import getpass
 
 def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True):
 
@@ -85,7 +86,7 @@ class ODK():
     def __init__(self, url):
         self.url=url
 
-    def connect(self, email, password):
+    def connect(self, email =input("enter your username: "), password = getpass("enter your password: ")):
         self.email = email
         self.password = password
         req = requests.post(self.url+'/v1/sessions', data=json.dumps(
