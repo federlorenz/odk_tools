@@ -86,10 +86,14 @@ class ODK():
     def __init__(self, url):
         self.url=url
 
-    def connect(self, email =input("enter your username: "), password = getpass("enter your password: ")):
+    def connect(self, email, password):
+
+        self.email = email
+        self.password = password
+
         req = requests.post(self.url+'/v1/sessions', data=json.dumps(
-            {"email": email, "password": password}), headers={'Content-Type': 'application/json'})
-        
+            {"email": self.email, "password": self.password}), headers={'Content-Type': 'application/json'})
+    
         self.token = req.json()["token"]
         self.headers = {'Authorization': 'Bearer '+self.token}
 
