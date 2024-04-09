@@ -59,30 +59,34 @@ class ODK():
     url
 
     class functions:\n
-    connect: connects to the ODK server\n
+    connect: connects to the webserver by providing username and password\n
     set_target: defines the project and form to connect to\n
-    get_project\n
-    get_form\n
-    save_form\n
-    save_data\n
-    get_submissions\n
-    survey\n
-    choices\n
-    get_repeats\n
-    get_attachments\n
-    processing_submission\n
-    processing_repeats\n
-    save_main\n
-    save_repeat\n
-    listing_submissions\n
-    get_submission_metadata\n
-    get_submission_xml\n
-    put_submission\n
-    return_element\n
-    modify_xml\n
-    update_xml\n
-    change_submission\n
+    list_projects:\n
+    get_project:\n
+    list_forms:\n
+    get_form:\n
+    save_form:\n
+    save_data:\n
+    get_submissions:\n
+    survey:\n
+    choices:\n
+    get_repeats:\n
+    get_attachments:\n
+    processing_submission:\n
+    processing_repeats:\n
+    process_all:\n
+    save_main:\n
+    save_repeat:\n
+    listing_submissions:\n
+    get_submission_metadata:\n
+    get_submission_xml:\n
+    put_submission:\n
+    return_element:\n
+    modify_xml:\n
+    update_xml:\n
+    change_submission:\n
     """
+
     def __init__(self, url):
         self.url=url
 
@@ -130,7 +134,7 @@ class ODK():
 
         return form
 
-    def save_form(self, xlsx,path=""):
+    def save_form(self, xlsx="form",path=""):
         
         req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers).content
         
@@ -542,4 +546,3 @@ class ODK():
             for i in range(len(variable)):
                 c = self.modify_xml(c, variable[i], func[i])
             self.put_submission(id, self.update_xml(c))
-
