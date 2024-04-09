@@ -7,7 +7,7 @@ from getpass import getpass
 odk = ODK(input("Type the url of the odk webserver you are connecting to: ")) #The ODK class should be instantiated providing the URL of the webserver
 
 #connecting to the webserver by providing username and password is required before any useful method of the ODK class can be used
-odk.connect(email=input('enter your username'),password=input('enter your password'))
+odk.connect(email=input('enter your username'),password=getpass('enter your password'))
 
 #returns a list of the project names the connected user has access to on ODK Central
 odk.list_projects()
