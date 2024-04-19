@@ -6,14 +6,14 @@ import requests
 import json
 from io import BytesIO
 import copy
-import datetime as dt
 import zipfile as zip
 import xlsxwriter
 import xml.etree.ElementTree as ET
 import uuid
 from types import FunctionType
 from .classes import Form
-from getpass import getpass
+
+#%% #@ Functions
 
 def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True):
 
@@ -50,6 +50,8 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
         worksheet.freeze_panes(2, 0)
 
     workbook.close()
+
+#%% #@ ODK Class
 
 class ODK():
 
