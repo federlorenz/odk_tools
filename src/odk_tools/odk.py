@@ -119,10 +119,13 @@ class ODK():
     
         return project
 
-    def list_forms(self,project):
+    def list_forms(self,project=None):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
-        project = [req.json()[i]["id"] for i in range(len(req.json()))
-                   if req.json()[i]["name"] == project][0]
+        if project!=None:
+            project = [req.json()[i]["id"] for i in range(len(req.json())) if req.json()[i]["name"] == project][0]
+        else:
+            project = [req.json()[i]["id"] for i in range(
+                len(req.json())) if req.json()[i]["name"] == self.project_name][0]
         req = requests.get(self.url+'/v1/projects/' +
                            str(project)+"/forms", headers=self.headers)
         forms = [req.json()[i]["name"] for i in range(len(req.json()))]
@@ -408,13 +411,13 @@ class ODK():
 
         return repeats
 
-    def process_all(self,form_name,variable='',time_variable='starttime'):
+    def process_all(self,variable='',time_variable='starttime'):
 
         submissions = self.processing_submission()
         survey = self.survey().dropna(how='all')
         choices = self.choices()
         repeats = self.processing_repeats()
-        survey_name = form_name
+        survey_name = self.form_name
         variable = variable
         time_variable = time_variable
 

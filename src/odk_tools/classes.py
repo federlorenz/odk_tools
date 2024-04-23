@@ -4,129 +4,130 @@ import matplotlib.gridspec as gridspec
 from fpdf import FPDF
 import matplotlib.pyplot as plt
 from io import BytesIO
+import numpy as np
 
 
-class SurveyPlus(pd.DataFrame):
-    """
-    attribute = surveys \n
-    methods = surveyfilter, surveysubset, get_survey, merge_horizontal, merge_vertical
-    """
+# class SurveyPlus(pd.DataFrame):
+#     """
+#     attribute = surveys \n
+#     methods = surveyfilter, surveysubset, get_survey, merge_horizontal, merge_vertical
+#     """
 
-    def __init__(self, *args, **kwargs):
-        pd.DataFrame.__init__(self, *args, **kwargs)
+#     def __init__(self, *args, **kwargs):
+#         pd.DataFrame.__init__(self, *args, **kwargs)
 
-    @property
-    def _constructor(self):
-        return SurveyPlus
+#     @property
+#     def _constructor(self):
+#         return SurveyPlus
 
-    _metadata = ["surveys"]
+#     _metadata = ["surveys"]
 
-    surveys = {'baseline': ['_B'],
-               'recruitment': ['_R'],
-               'diary': ['_D'],
-               'weekly': ['_W'],
-               'pay': ['_P'],
-               'end': ['_E']}
+#     surveys = {'baseline': ['_B'],
+#                'recruitment': ['_R'],
+#                'diary': ['_D'],
+#                'weekly': ['_W'],
+#                'pay': ['_P'],
+#                'end': ['_E']}
 
-    def check_surveys(x):
-        tocheck = x.surveys
-        suffix = list(set(pd.Series(x.columns).apply(
-            lambda a: "_"+a.split("_")[-1])))
-        for j in tocheck.keys():
-            for k in tocheck[j]:
-                if k not in suffix:
-                    tocheck[j].remove(k)
-        new = {}
-        for j in tocheck.keys():
-            if len(tocheck[j]) != 0:
-                new[j] = tocheck[j]
-        x.surveys = new
+#     def check_surveys(x):
+#         tocheck = x.surveys
+#         suffix = list(set(pd.Series(x.columns).apply(
+#             lambda a: "_"+a.split("_")[-1])))
+#         for j in tocheck.keys():
+#             for k in tocheck[j]:
+#                 if k not in suffix:
+#                     tocheck[j].remove(k)
+#         new = {}
+#         for j in tocheck.keys():
+#             if len(tocheck[j]) != 0:
+#                 new[j] = tocheck[j]
+#         x.surveys = new
 
-    def survey_filter(self, survey_in=None, x=surveys):
-        """
-        Input list of surveys.
-        """
-        if survey_in == None:
-            return self
-        else:
-            get_extension = []
-            for j in survey_in:
-                for k in x[j]:
-                    get_extension.append(k)
-            get_columns = []
-            for k in self.columns:
-                if "_"+k.split("_")[-1] in get_extension:
-                    get_columns.append(k)
-            self = self.drop_duplicates(subset=get_columns).dropna(
-                how="all", subset=get_columns)
-            self.surveys = {key: value for key,
-                            value in x.items() if key in survey_in}
-            return self
+#     def survey_filter(self, survey_in=None, x=surveys):
+#         """
+#         Input list of surveys.
+#         """
+#         if survey_in == None:
+#             return self
+#         else:
+#             get_extension = []
+#             for j in survey_in:
+#                 for k in x[j]:
+#                     get_extension.append(k)
+#             get_columns = []
+#             for k in self.columns:
+#                 if "_"+k.split("_")[-1] in get_extension:
+#                     get_columns.append(k)
+#             self = self.drop_duplicates(subset=get_columns).dropna(
+#                 how="all", subset=get_columns)
+#             self.surveys = {key: value for key,
+#                             value in x.items() if key in survey_in}
+#             return self
 
-    def survey_subset(self, survey_in=None, x=surveys, id_column=None):
-        if survey_in == None:
-            return self
-        else:
-            try:
-                get_extension = []
-                for j in survey_in:
-                    for k in x[j]:
-                        get_extension.append(k)
-                get_columns = []
-                for k in self.columns:
-                    if "_"+k.split("_")[-1] in get_extension:
-                        get_columns.append(k)
-                if id_column == None:
-                    return self[get_columns]
-                else:
-                    return self[[id_column]+get_columns]
-            except:
-                print("error")
+#     def survey_subset(self, survey_in=None, x=surveys, id_column=None):
+#         if survey_in == None:
+#             return self
+#         else:
+#             try:
+#                 get_extension = []
+#                 for j in survey_in:
+#                     for k in x[j]:
+#                         get_extension.append(k)
+#                 get_columns = []
+#                 for k in self.columns:
+#                     if "_"+k.split("_")[-1] in get_extension:
+#                         get_columns.append(k)
+#                 if id_column == None:
+#                     return self[get_columns]
+#                 else:
+#                     return self[[id_column]+get_columns]
+#             except:
+#                 print("error")
 
-    def get_survey(self, survey=None):
-        if survey == None:
-            return self
-        else:
-            self = self.survey_filter(survey_in=[survey])
-            self = self.survey_subset(survey_in=[survey])
-            self.surveys = {key: value for key,
-                            value in self.surveys.items() if key in [survey]}
-            return self
+#     def get_survey(self, survey=None):
+#         if survey == None:
+#             return self
+#         else:
+#             self = self.survey_filter(survey_in=[survey])
+#             self = self.survey_subset(survey_in=[survey])
+#             self.surveys = {key: value for key,
+#                             value in self.surveys.items() if key in [survey]}
+#             return self
 
-    def merge_horizontal(self, other, set_index=None):
-        surveys = {key: [] for key in list(
-            set(self.surveys.keys()).union(set(other.surveys.keys())))}
-        for j in surveys.keys():
-            for k in (self.surveys, other.surveys):
-                if j in k.keys():
-                    surveys[j] = surveys[j] + k[j]
-            surveys[j] = list(set(surveys[j]))
-        if set_index == None:
-            output = self.join(other, how="outer")
-        else:
-            output = self.set_index(set_index).join(
-                other.set_index(set_index), how="other")
-        output.surveys = surveys
-        return output
+#     def merge_horizontal(self, other, set_index=None):
+#         surveys = {key: [] for key in list(
+#             set(self.surveys.keys()).union(set(other.surveys.keys())))}
+#         for j in surveys.keys():
+#             for k in (self.surveys, other.surveys):
+#                 if j in k.keys():
+#                     surveys[j] = surveys[j] + k[j]
+#             surveys[j] = list(set(surveys[j]))
+#         if set_index == None:
+#             output = self.join(other, how="outer")
+#         else:
+#             output = self.set_index(set_index).join(
+#                 other.set_index(set_index), how="other")
+#         output.surveys = surveys
+#         return output
 
-    def merge_vertical(self, other, set_index=None):
-        shared = list(set(self.columns).intersection(set(other.columns)))
-        surveys = {key: [] for key in list(
-            set(self.surveys.keys()).union(set(other.surveys.keys())))}
-        for j in surveys.keys():
-            for k in (self.surveys, other.surveys):
-                if j in k.keys():
-                    surveys[j] = surveys[j] + k[j]
-            surveys[j] = list(set(surveys[j]))
-        if set_index == None:
-            output = pd.concat(
-                [self[[i for i in self.columns if i in shared]], other[[i for i in other.columns if i in shared]]])
-        else:
-            output = pd.concat([self.set_index(set_index)[[i for i in self.columns if i in shared]], other.set_index(
-                set_index)[[i for i in other.columns if i in shared]]])
-        output.surveys = surveys
-        SurveyPlus.check_surveys(output)
-        return output
+#     def merge_vertical(self, other, set_index=None):
+#         shared = list(set(self.columns).intersection(set(other.columns)))
+#         surveys = {key: [] for key in list(
+#             set(self.surveys.keys()).union(set(other.surveys.keys())))}
+#         for j in surveys.keys():
+#             for k in (self.surveys, other.surveys):
+#                 if j in k.keys():
+#                     surveys[j] = surveys[j] + k[j]
+#             surveys[j] = list(set(surveys[j]))
+#         if set_index == None:
+#             output = pd.concat(
+#                 [self[[i for i in self.columns if i in shared]], other[[i for i in other.columns if i in shared]]])
+#         else:
+#             output = pd.concat([self.set_index(set_index)[[i for i in self.columns if i in shared]], other.set_index(
+#                 set_index)[[i for i in other.columns if i in shared]]])
+#         output.surveys = surveys
+#         SurveyPlus.check_surveys(output)
+#         return output
 
 class Form():
 
@@ -194,7 +195,6 @@ class Form():
             reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split(
                 "/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
         return Form(submissions, repeats=reps, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
-
 
     def pdf_summary(self, directory=''):
 
@@ -371,3 +371,102 @@ class Form():
             pdf.ln(10)
 
         pdf.output(directory+self.survey_name+'.pdf', 'F')
+
+    def add_headers(self, questions=True, variable=None):
+        df = self.submissions
+        repeats = self.repeats
+        survey = self.survey
+
+        if questions == True:
+            a = []
+            for j in df.columns:
+                if j in list(survey["name"]):
+                    x = survey["label::English (en)"].loc[survey["name"]
+                                                          == j].iloc[0]
+                    a.append(x)
+                else:
+                    a.append(np.nan)
+            df_out = copy.deepcopy(df)
+            df_out.loc[-1] = a
+            df_out.sort_index(inplace=True)
+
+            reps = copy.copy(repeats)
+            for k in reps.keys():
+                a = []
+                for j in reps[k].columns:
+                    if j in list(survey["name"]):
+                        x = survey["label::English (en)"].loc[survey["name"]
+                                                              == j].iloc[0]
+                        a.append(x)
+                    else:
+                        a.append(np.nan)
+                rep_out = copy.deepcopy(repeats[k])
+                rep_out.loc[-1] = a
+                rep_out.sort_index(inplace=True)
+                reps[k] = rep_out
+
+        if variable != None:
+            a = []
+            for j in df.columns:
+                if j in list(survey["name"]):
+                    x = survey[variable].loc[survey["name"]
+                                                          == j].iloc[0]
+                    a.append(x)
+                else:
+                    a.append(np.nan)
+            if not questions:
+                df_out = copy.deepcopy(df)
+                df_out.loc[-1] = a
+                df_out.sort_index(inplace=True)
+            else:
+                df_out.loc[-2] = a
+                df_out.sort_index(inplace=True)
+
+            if not questions:
+                reps = copy.copy(repeats)
+            for k in reps.keys():
+                a = []
+                for j in reps[k].columns:
+                    if j in list(survey["name"]):
+                        x = survey[variable].loc[survey["name"]
+                                                              == j].iloc[0]
+                        a.append(x)
+                    else:
+                        a.append(np.nan)
+                if not questions:
+                    rep_out = copy.deepcopy(reps[k])
+                    rep_out.loc[-1] = a
+                    rep_out.sort_index(inplace=True)
+                else:
+                    rep_out.loc[-2] = a
+                    rep_out.sort_index(inplace=True)
+                reps[k] = rep_out
+
+
+        if variable == None:
+            new_labels = pd.MultiIndex.from_arrays(
+                [df_out.columns, df_out.iloc[0]], names=['code', 'question'])
+            df_out = df_out.set_axis(new_labels, axis=1).iloc[1:]
+            for k in reps.keys():
+                new_labels = pd.MultiIndex.from_arrays(
+                    [reps[k].columns, reps[k].iloc[0]], names=['code', 'question'])
+                reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[1:]
+        elif not questions:
+            new_labels = pd.MultiIndex.from_arrays(
+                [df_out.columns, df_out.iloc[0]], names=['code', 'variable'])
+            df_out = df_out.set_axis(new_labels, axis=1).iloc[1:]
+            for k in reps.keys():
+                new_labels = pd.MultiIndex.from_arrays(
+                    [reps[k].columns, reps[k].iloc[0]], names=['code', 'variable'])
+                reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[1:]
+        else:
+            new_labels = pd.MultiIndex.from_arrays(
+                [df_out.columns, df_out.iloc[0], df_out.iloc[1]], names=['code', 'variable','question'])
+            df_out = df_out.set_axis(new_labels, axis=1).iloc[2:]
+            for k in reps.keys():
+                new_labels = pd.MultiIndex.from_arrays(
+                    [reps[k].columns, reps[k].iloc[0],reps[k].iloc[1]], names=['code', 'variable','question'])
+                reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[2:]
+
+
+        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices)
