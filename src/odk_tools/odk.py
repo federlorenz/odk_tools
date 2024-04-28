@@ -538,14 +538,14 @@ class ODK():
         tree.write(xml_out, encoding='utf-8')
         return xml_out.getvalue()
 
-    def change_submission(self, variable: str | list[str], id, project, form, func: FunctionType = lambda x: x | list[FunctionType]):
-        if type(variable) == str:
+    def change_submission(self, variable: str | list[str], id, project=None, form=None, func: FunctionType = lambda x: x | list[FunctionType]):
+        if project != None | form != None:
             self.set_target(project, form)
+        if type(variable) == str:
             c = self.get_submission_xml(id)
             ff = self.modify_xml(c, variable, func)
             self.put_submission(id, self.update_xml(ff))
         else:
-            self.set_target(project, form)
             c = self.get_submission_xml(id)
             for i in range(len(variable)):
                 c = self.modify_xml(c, variable[i], func[i])
