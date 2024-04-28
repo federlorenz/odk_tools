@@ -521,22 +521,21 @@ class ODK():
         tree = ET.parse(BytesIO(xml))
         root = tree.getroot()
       
-        if len(tree.find('meta').find('deprecatedID').text)>0:
-            old = tree.find('meta').find('instanceID').text
-            tree.find('meta').find('instanceID').text = 'uuid:'+str(uuid.uuid4())
-            root.find('meta').find('deprecatedID').text = old
-
-        else:
+        if tree.find('meta').find('deprecatedID') == None:
             old = tree.find('meta').find('instanceID').text
             tree.find('meta').find(
                 'instanceID').text = 'uuid:'+str(uuid.uuid4())
             deprecated = ET.Element("deprecatedID")
             deprecated.text = old
             root.find('meta').append(deprecated)
-        
+
+        else:
+            if len(tree.find('meta').find('deprecatedID').text)>0:
+                old = tree.find('meta').find('instanceID').text
+                tree.find('meta').find('instanceID').text = 'uuid:'+str(uuid.uuid4())
+                root.find('meta').find('deprecatedID').text = old
         xml_out = BytesIO()
         tree.write(xml_out, encoding='utf-8')
-
         return xml_out.getvalue()
 
     def change_submission(self, variable: str | list[str], id, project, form, func: FunctionType = lambda x: x | list[FunctionType]):
