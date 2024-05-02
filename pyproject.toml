@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "odk_tools"
-version = "0.1.4"
+version = "0.1.5"
 authors = [
   { name="Federico Lorenzetti", email="lorenzetti.federico@gmail.com" },
 ]
