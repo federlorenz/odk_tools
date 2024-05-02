@@ -231,7 +231,7 @@ class ODK():
         def select_one(select, value):
             x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[1]
             y = choices["label::English (en)"].loc[choices["list_name"]
-                                                   == x].loc[choices["name"].map(lambda x: str(x)) == str(value)].iloc[0]
+                                                   == x].loc[choices["name"] == value].iloc[0]
             return y
 
 
