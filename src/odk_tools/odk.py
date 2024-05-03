@@ -539,7 +539,7 @@ class ODK():
         return xml_out.getvalue()
 
     def change_submission(self, variable: str | list[str], id, project=None, form=None, func: FunctionType = lambda x: x | list[FunctionType]):
-        if project != None | form != None:
+        if (project != None) | (form != None):
             self.set_target(project, form)
         if type(variable) == str:
             c = self.get_submission_xml(id)
