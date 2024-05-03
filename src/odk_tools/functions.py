@@ -17,7 +17,7 @@ def form_merge(form:Form) -> pd.DataFrame:
         else:
             subs = subs.set_index('KEY', drop=False)
             out = subs.join(other=[value.set_index('PARENT_KEY').rename(columns={
-                            'KEY': 'KEY'+key.split('-')[-1]}) for key, value in reps.items()], how='outer', validate='one_to_many')
+                            'KEY': 'KEY'+key.split('-')[-1]}) for key, value in reps.items() if len(value)>0], how='outer', validate='one_to_many')
             drops = []
             for j in range(len(out.columns)):
                 a = out.columns[j]
@@ -37,9 +37,10 @@ def form_merge(form:Form) -> pd.DataFrame:
             subs = subs.set_index('KEY', drop=False)
             out = subs
             for key,value in reps.items():
-                middle = out.join(value.set_index('PARENT_KEY').rename(columns={
-                    'KEY': 'KEY'+key.split('-')[-1]}, level='code'), how='outer', lsuffix='_x', rsuffix='_y')
-                out = middle
+                if len(value)>0:
+                    middle = out.join(value.set_index('PARENT_KEY').rename(columns={
+                        'KEY': 'KEY'+key.split('-')[-1]}, level='code'), how='outer', lsuffix='_x', rsuffix='_y')
+                    out = middle
             drops = []
             for j in range(len(out.columns.get_level_values('code'))):
                 a = out.columns.get_level_values('code')[j]
