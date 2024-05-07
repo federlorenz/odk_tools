@@ -150,20 +150,6 @@ class ODK():
         file.write(req)
         file.close()
 
-    def save_data(self, path=""):
-        req = requests.get(self.url+'/v1/projects/'+str(self.get_project()) +
-                           "/forms/"+self.get_form()+".xlsx", headers=self.headers).content
-
-        version = str(pd.read_excel(BytesIO(req),
-                                    sheet_name="settings")["version"].iloc[0])
-        req = (requests.post(self.url+'/v1/projects/' +
-                         str(self.get_project())+"/forms/"+self.get_form()+"/submissions.csv.zip?",
-                         headers=self.headers))
-
-        file = open(path+self.form_name+"_v"+version+".zip", "wb")
-        file.write(req.content)
-        file.close()
-
     def get_submissions(self):
 
         req = (requests.get(self.url+'/v1/projects/' +
@@ -212,6 +198,21 @@ class ODK():
         for j in req.json():
             attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' +str(self.get_project())+"/forms/"+self.get_form()+"/attachments/"+j["name"], headers=self.headers)).content))
         return attachments
+
+    def get_media(self):
+        req = requests.get(self.url+'/v1/projects/'+str(self.get_project()) +
+                           "/forms/"+self.get_form()+".xlsx", headers=self.headers).content
+
+        req = (requests.post(self.url+'/v1/projects/' +
+                             str(self.get_project())+"/forms/" +
+                             self.get_form()+"/submissions.csv.zip?",
+                             headers=self.headers))
+        zipfile = zip.ZipFile(BytesIO(req.content))
+        media = {}
+        for name in zipfile.namelist():
+            if (name.split('/')[0] == 'media') & (len(name)>6):
+                media[name.split('/')[-1]] = zipfile.read(name)
+        return media
 
     def processing_submission(self,process_datetimes=False):
         survey = self.survey()
@@ -420,8 +421,9 @@ class ODK():
         survey_name = self.form_name
         variable = variable
         time_variable = time_variable
+        media = self.get_media()
 
-        return Form(submissions,survey,choices,repeats,survey_name,variable,time_variable)
+        return Form(submissions,survey,choices,repeats,survey_name,variable,time_variable,media)
 
     def save_main(self,data=None,path=""):
 
@@ -463,6 +465,21 @@ class ODK():
             rep_out.sort_index(inplace=True)
 
             save_to_excel(rep_out, path+k+".xlsx")
+
+    def save_data(self, path=""):
+        req = requests.get(self.url+'/v1/projects/'+str(self.get_project()) +
+                           "/forms/"+self.get_form()+".xlsx", headers=self.headers).content
+
+        version = str(pd.read_excel(BytesIO(req),
+                                    sheet_name="settings")["version"].iloc[0])
+        req = (requests.post(self.url+'/v1/projects/' +
+                             str(self.get_project())+"/forms/" +
+                             self.get_form()+"/submissions.csv.zip?",
+                             headers=self.headers))
+
+        file = open(path+self.form_name+"_v"+version+".zip", "wb")
+        file.write(req.content)
+        file.close()
 
     def listing_submissions(self):
         req = (requests.get(self.url+'/v1/projects/' +

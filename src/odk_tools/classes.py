@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import numpy as np
 import datetime
+import os
 
 class Form():
 
@@ -17,9 +18,10 @@ class Form():
     survey_name
     choices
     survey
+    media
     """
 
-    def __init__(self, submissions, survey, choices, repeats, survey_name, variable, time_variable) -> None:
+    def __init__(self, submissions, survey, choices, repeats, survey_name, variable, time_variable, media) -> None:
         self.submissions =submissions
         self.repeats = repeats
         self.variable = variable
@@ -27,10 +29,33 @@ class Form():
         self.survey_name = survey_name
         self.survey = survey
         self.choices = choices
+        self.media = media
 
     @property
     def _constructor(self):
         return Form
+    
+    def get_media(self, subs, reps):
+        names = list(self.survey['name'].loc[(
+            self.survey['type'] == 'image') | (self.survey['type'] == 'audio') | (self.survey['type'] == 'video')])
+        media = set()
+        for j in subs.columns:
+            if j in names:
+                media = media.union(set(subs[j]))
+        for k in reps.values():
+            for j in k.columns:
+                if j in names:
+                    media = media.union(set(k[j]))
+        return media
+
+    def save_media(self, path=""):
+        if len(self.media.items()) != 0:
+            if 'media' not in os.listdir(path):
+                os.mkdir(path+'media')
+            for key,value in self.media.items():
+                file = open(path+'./media/'+key, "wb")
+                file.write(value)
+                file.close()
 
     def filter_variable(self, x):
         submissions = copy.copy(
@@ -39,7 +64,9 @@ class Form():
         reps =copy.copy(self.repeats)
         for j in reps.keys():
             reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split("/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
-        return Form(submissions, repeats=reps, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
+        media = copy.copy(self.media)
+        media = {key:value for key,value in media.items() if key[:-4] in Form.get_media(submissions,reps)}
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
 
     def date_time_filter(
             self,
@@ -72,7 +99,12 @@ class Form():
         for j in reps.keys():
             reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split(
                 "/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
-        return Form(submissions, repeats=reps, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
+
+        media = copy.copy(self.media)
+        media = {key: value for key, value in media.items(
+        ) if key[:-4] in Form.get_media(submissions, reps)}
+
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
 
     def pdf_summary(self, directory=''):
 
