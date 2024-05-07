@@ -379,4 +379,4 @@ class Form():
                 reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[2:]
 
 
-        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices)
+        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, media=self.media)
