@@ -41,11 +41,11 @@ class Form():
         media = set()
         for j in subs.columns:
             if j in names:
-                media = media.union(set(subs[j]))
+                media = media.union(set(subs[j].loc[~pd.isna(subs[j])]))
         for k in reps.values():
             for j in k.columns:
                 if j in names:
-                    media = media.union(set(k[j]))
+                    media = media.union(set(k[j].loc[~pd.isna(k[j])]))
         return media
 
     def save_media(self, path="./"):
@@ -65,7 +65,7 @@ class Form():
         for j in reps.keys():
             reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split("/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
         media = copy.copy(self.media)
-        media = {key:value for key,value in media.items() if key[:-4] in self.get_media(submissions,reps)}
+        media = {key:value for key,value in media.items() if key in self.get_media(submissions,reps)}
         return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
 
     def date_time_filter(
