@@ -48,7 +48,7 @@ class Form():
                     media = media.union(set(k[j]))
         return media
 
-    def save_media(self, path=""):
+    def save_media(self, path="./"):
         if len(self.media.items()) != 0:
             if 'media' not in os.listdir(path):
                 os.mkdir(path+'media')
