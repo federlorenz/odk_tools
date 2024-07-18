@@ -155,17 +155,17 @@ class ODK():
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.get_project())+"/forms/"+self.get_form()+"/submissions.csv?",
                             headers=self.headers))
-        df = pd.read_csv(BytesIO(req.content))
+        df = pd.read_csv(BytesIO(req.content), na_values=[' '], keep_default_na=False)
         return df
 
     def survey(self):
         req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers)
-        survey = pd.read_excel(BytesIO(req.content))
+        survey = pd.read_excel(BytesIO(req.content),na_values=[' '],keep_default_na=False)
         return survey
 
     def choices(self):
         req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers)
-        choices = pd.read_excel(BytesIO(req.content), sheet_name="choices")
+        choices = pd.read_excel(BytesIO(req.content), sheet_name="choices", na_values=[''], keep_default_na=False)
         return choices
     
     def get_repeats(self):
@@ -182,7 +182,8 @@ class ODK():
                     sheet_name="settings")["form_id"].iloc[0])
         
         for j in survey["name"].loc[survey["type"] == "begin_repeat"]:
-            repeats[form_id+"-" +j] = pd.read_csv(zipfile.open(form_id+"-" +j+".csv"))
+            repeats[form_id+"-" + j] = pd.read_csv(zipfile.open(
+                form_id+"-" + j+".csv"), na_values=[' '], keep_default_na=False)
 
         return repeats
 
