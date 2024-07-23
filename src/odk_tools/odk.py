@@ -261,7 +261,7 @@ class ODK():
         group_names = sorted(group_names, key=len, reverse=True)
 
         column_names = sorted(list(set(survey["name"].loc[((survey["type"] != "begin_group") & (survey["type"] != "end_group") & (
-            survey["type"] != "begin_repeat") & (survey["type"] != "end_repeat"))]).difference(set([np.nan]))), key=len, reverse=True)
+            survey["type"] != "begin_repeat") & (survey["type"] != "end_repeat"))]).difference(set([np.nan,""]))), key=len, reverse=True)
 
 
         df_columns = sorted(list(df.columns), key=len, reverse=True)
