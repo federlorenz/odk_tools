@@ -155,7 +155,7 @@ class ODK():
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.get_project())+"/forms/"+self.get_form()+"/submissions.csv?",
                             headers=self.headers))
-        df = pd.read_csv(BytesIO(req.content), na_values=[' '], keep_default_na=False)
+        df = pd.read_csv(BytesIO(req.content))
         return df
 
     def survey(self):
