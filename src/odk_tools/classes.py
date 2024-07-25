@@ -273,12 +273,20 @@ class Form():
             len(self.survey)) if question_type(self.survey['name'].iloc[j])[0] in ty}
 
         for i in print_dic.keys():
-            figu, figuHeight = fig_wrap(
-                i, data=self.submissions, typ=print_dic[i])
-
-            pdf.set_x(105-100)
-            pdf.image(figu, w=200, h=figuHeight*10)
-            pdf.ln(10)
+            for value in self.repeats.values():
+                if i in value.columns:
+                    figu, figuHeight = fig_wrap(
+                        i, data=value, typ=print_dic[i])
+                    pdf.set_x(105-100)
+                    pdf.image(figu, w=200, h=figuHeight*10)
+                    pdf.ln(10)
+                    break
+            else:
+                figu, figuHeight = fig_wrap(i, data=self.submissions, typ=print_dic[i])
+                pdf.set_x(105-100)
+                pdf.image(figu, w=200, h=figuHeight*10)
+                pdf.ln(10)
+            continue
 
         pdf.output(directory+self.survey_name+'.pdf', 'F')
 
