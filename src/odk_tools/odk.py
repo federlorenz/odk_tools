@@ -233,14 +233,14 @@ class ODK():
 
         def select_one(select, value):
             x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[1]
-            y = choices["label::English (en)"].loc[choices["list_name"]
+            y = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
                                                    == x].loc[choices["name"] == value].iloc[0]
             return y
 
 
         def select_multiple(select, value):
             x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[1]
-            y = choices.loc[choices["list_name"] == x]
+            y = choices.loc[choices["list_name"].map(lambda x: x.strip()) == x]
             z = []
             for i in range(len(y)):
                 if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
@@ -254,9 +254,18 @@ class ODK():
             z = y["label"].loc[y["name"] == value].iloc[0]
             return z
 
+        def select_multiple_from_file(select, value):
+            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[
+                1]
+            y = pd.read_csv(x)
+            z = []
+            for i in range(len(y)):
+                if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
+                    z.append(y["label"].iloc[i])
+            return " \n".join(z)
 
         func = {"select_one_from_file": select_one_from_file,
-                "select_one": select_one, "select_multiple": select_multiple}
+                "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
 
         group_names = list(survey["name"].loc[survey["type"] == "begin_group"])
         group_names = sorted(group_names, key=len, reverse=True)
