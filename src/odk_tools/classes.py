@@ -136,7 +136,7 @@ class Form():
 
         def reindex(input, var, choices=self.choices):
             if question_type(var)[0] == "select_one":
-                selects = choices["label::English (en)"].loc[choices["list_name"]
+                selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x:x.split())
                                                             == question_type(var)[1]]
                 input = input.reindex(selects)
             if question_type(var)[0] == "integer":
@@ -144,7 +144,7 @@ class Form():
             if question_type(var)[0] == "decimal":
                 input = input.sort_index()
             if question_type(var)[0] == "select_multiple":
-                selects = choices["label::English (en)"].loc[choices["list_name"]
+                selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.split())
                                                             == question_type(var)[1]]
                 input = input.reindex(selects)
             return input
