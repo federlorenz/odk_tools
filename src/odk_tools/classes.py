@@ -19,9 +19,10 @@ class Form():
     choices
     survey
     media
+    attachments
     """
 
-    def __init__(self, submissions, survey, choices, repeats, survey_name, variable, time_variable, media) -> None:
+    def __init__(self, submissions, survey, choices, repeats, survey_name, variable, time_variable, media, attachments) -> None:
         self.submissions =submissions
         self.repeats = repeats
         self.variable = variable
@@ -30,6 +31,7 @@ class Form():
         self.survey = survey
         self.choices = choices
         self.media = media
+        self.attachments = attachments
 
     @property
     def _constructor(self):
@@ -66,7 +68,7 @@ class Form():
             reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split("/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
         media = copy.copy(self.media)
         media = {key:value for key,value in media.items() if key in self.get_media(submissions,reps)}
-        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices,attachments=self.attachments)
 
     def date_time_filter(
             self,
@@ -104,7 +106,7 @@ class Form():
         media = {key: value for key, value in media.items(
         ) if key[:-4] in self.get_media(submissions, reps)}
 
-        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices)
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, attachments=self.attachments)
 
     def pdf_summary(self, directory=''):
 
@@ -147,6 +149,11 @@ class Form():
                 selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
                                                             == question_type(var)[1]]
                 input = input.reindex(selects)
+            if question_type(var)[0] == "select_one_from_file":
+                file = 
+                selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
+                                                             == question_type(var)[1]]
+            
             return input
 
         def multiprocess(series):
@@ -386,5 +393,4 @@ class Form():
                     [reps[k].columns, reps[k].iloc[0],reps[k].iloc[1]], names=['code', 'variable','question'])
                 reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[2:]
 
-
-        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, media=self.media)
+        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, media=self.media, attachments=self.attachments)
