@@ -150,10 +150,9 @@ class Form():
                                                             == question_type(var)[1]]
                 input = input.reindex(selects)
             if question_type(var)[0] == "select_one_from_file":
-                file = 
                 selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
                                                              == question_type(var)[1]]
-            
+                input = input.reindex(selects)
             return input
 
         def multiprocess(series):

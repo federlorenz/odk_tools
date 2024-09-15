@@ -529,11 +529,23 @@ class ODK():
         return None
 
     def modify_xml(self, xml, variable: str, function):
-            
         tree = ET.parse(BytesIO(xml))
-        d = self.return_element(tree,variable)
+        d = self.return_element(tree, variable)
         if d == None:
-            return xml
+            try:
+                if tree.find(variable) == None:
+                    root = tree.getroot()
+                    child = ET.Element(variable)
+                    child.text = function(None)
+                    root.append(child)
+                else:
+                    tree.find(variable).text = function(None)
+                xml_out = BytesIO()
+                tree.write(xml_out, encoding='utf-8')
+                return xml_out.getvalue()
+            except:
+                print('an error occurred while processing for variable ', variable)
+                return xml
         else:
             try:
                 k = d.text
