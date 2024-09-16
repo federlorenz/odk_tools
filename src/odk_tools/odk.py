@@ -93,6 +93,8 @@ class ODK():
         self.url=url
         self.form = None
         self.project = None
+        self.survey = None
+        self.choices = None
 
     def connect(self, email, password):
 
@@ -164,6 +166,10 @@ class ODK():
             self.project = self.get_project()
         if self.form == None:
             self.form = self.get_form()
+        if self.survey == None:
+            self.survey = self.get_survey()
+        if self.choices ==  None:
+            self.choiches = self.get_choices()
 
     def get_submissions(self):
         self.initialize()
@@ -173,14 +179,13 @@ class ODK():
         df = pd.read_csv(BytesIO(req.content))
         return df
 
-    def survey(self):
-        self.initialize()
+    def get_survey(self):
         req = requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers)
         survey = pd.read_excel(BytesIO(req.content),na_values=[' ',''],keep_default_na=False).dropna(how='all')
+        self.survey = survey
         return survey
 
-    def choices(self):
-        self.initialize()
+    def get_choices(self):
         req = requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers)
         choices = pd.read_excel(BytesIO(req.content), sheet_name="choices", na_values=[
                                 ' ', ''], keep_default_na=False).dropna(how='all')
@@ -188,7 +193,6 @@ class ODK():
     
     def get_repeats(self):
         self.initialize()
-        survey = self.survey()
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/"+self.form+"/submissions.csv.zip?attachments=false",
                             headers=self.headers))
@@ -199,7 +203,7 @@ class ODK():
         form_id = str(pd.read_excel(BytesIO(requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers).content),
                     sheet_name="settings")["form_id"].iloc[0])
         
-        for j in survey["name"].loc[survey["type"] == "begin_repeat"]:
+        for j in self.survey["name"].loc[self.survey["type"] == "begin_repeat"]:
             repeats[form_id+"-" + j] = pd.read_csv(zipfile.open(
                 form_id+"-" + j+".csv"), na_values=[' ', ''], keep_default_na=False).dropna(how='all')
 
@@ -207,11 +211,10 @@ class ODK():
 
     def get_attachments(self):
         self.initialize()
-        survey = self.survey()
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/"+self.form+"/attachments",
                             headers=self.headers))
-        
+
         attachments = {}
 
         for j in req.json():
@@ -236,8 +239,7 @@ class ODK():
         return media
 
     def processing_submission(self,process_datetimes=False):
-        survey = self.survey()
-        choices = self.choices()
+        self.initialize()
         df = self.get_submissions()
 
         def remove_tail(list_in):
@@ -251,15 +253,15 @@ class ODK():
 
 
         def select_one(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[1]
-            y = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
-                                                   == x].loc[choices["name"] == value].iloc[0]
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[1]
+            y = self.choices["label::English (en)"].loc[self.choices["list_name"].map(lambda x: x.strip())
+                                                   == x].loc[self.choices["name"] == value].iloc[0]
             return y
 
 
         def select_multiple(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[1]
-            y = choices.loc[choices["list_name"].map(lambda x: x.strip()) == x]
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[1]
+            y = self.choices.loc[self.choices["list_name"].map(lambda x: x.strip()) == x]
             z = []
             for i in range(len(y)):
                 if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
@@ -268,13 +270,13 @@ class ODK():
 
 
         def select_one_from_file(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[1]
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[1]
             y = pd.read_csv(x)
             z = y["label"].loc[y["name"] == value].iloc[0]
             return z
 
         def select_multiple_from_file(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
                 1]
             y = pd.read_csv(x)
             z = []
@@ -286,11 +288,11 @@ class ODK():
         func = {"select_one_from_file": select_one_from_file,
                 "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
 
-        group_names = list(survey["name"].loc[survey["type"] == "begin_group"])
+        group_names = list(self.survey["name"].loc[self.survey["type"] == "begin_group"])
         group_names = sorted(group_names, key=len, reverse=True)
 
-        column_names = sorted(list(set(survey["name"].loc[((survey["type"] != "begin_group") & (survey["type"] != "end_group") & (
-            survey["type"] != "begin_repeat") & (survey["type"] != "end_repeat"))]).difference(set([np.nan,""]))), key=len, reverse=True)
+        column_names = sorted(list(set(self.survey["name"].loc[((self.survey["type"] != "begin_group") & (self.survey["type"] != "end_group") & (
+            self.survey["type"] != "begin_repeat") & (self.survey["type"] != "end_repeat"))]).difference(set([np.nan,""]))), key=len, reverse=True)
 
 
         df_columns = sorted(list(df.columns), key=len, reverse=True)
@@ -308,7 +310,7 @@ class ODK():
         for i in df.columns:
             # try:
             a = i
-            b = survey["type"].loc[survey["name"] == a]
+            b = self.survey["type"].loc[self.survey["name"] == a]
             if len(b) == 0:
                 pass
             else:
@@ -330,24 +332,23 @@ class ODK():
                 df["SubmissionDate"], format="%Y-%m-%dT%H:%M:%S.%fZ")
             df["start"] = pd.to_datetime(df["start"], format="%Y-%m-%dT%H:%M:%S.%f%z")
 
-            for j in survey["name"].loc[survey["type"] == "datetime"]:
+            for j in self.survey["name"].loc[self.survey["type"] == "datetime"]:
                 try:
                     df[j] = pd.to_datetime(df[j], format="%Y-%m-%dT%H:%M:%S.%f%z")
                 except:
                     df[j] = pd.to_datetime(df[j], format="mixed")
 
-            for j in survey["name"].loc[survey["type"] == "date"]:
+            for j in self.survey["name"].loc[self.survey["type"] == "date"]:
                 df[j] = pd.to_datetime(df[j], format="%Y-%m-%d").dt.date
 
-            for j in survey["name"].loc[survey["type"] == "time"]:
+            for j in self.survey["name"].loc[self.survey["type"] == "time"]:
                 df[j] = pd.to_datetime(df[j], format="%H:%M:%S.%f%z").dt.time
         
         
         return df
 
     def processing_repeats(self, data=None, process_datetimes=False):
-        survey = self.survey()
-        choices = self.choices()
+        self.initialize()
         repeats = self.get_repeats()
         df = self.processing_submission() if type(data) == type(None) else data
         set_not_rejected = list(df["KEY"])
@@ -361,16 +362,16 @@ class ODK():
             return a
 
         def select_one(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
                 1]
-            y = choices["label::English (en)"].loc[choices["list_name"]
-                                                   == x].loc[choices["name"] == value].iloc[0]
+            y = self.choices["label::English (en)"].loc[self.choices["list_name"]
+                                                   == x].loc[self.choices["name"] == value].iloc[0]
             return y
 
         def select_multiple(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
                 1]
-            y = choices.loc[choices["list_name"] == x]
+            y = self.choices.loc[self.choices["list_name"] == x]
             z = []
             for i in range(len(y)):
                 if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
@@ -378,7 +379,7 @@ class ODK():
             return " \n".join(z)
 
         def select_one_from_file(select, value):
-            x = survey["type"].loc[survey["name"] == select].iloc[0].split(" ")[
+            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
                 1]
             y = pd.read_csv(x)
             z = y["label"].loc[y["name"] == value].iloc[0]
@@ -387,18 +388,18 @@ class ODK():
         func = {"select_one_from_file": select_one_from_file,
                 "select_one": select_one, "select_multiple": select_multiple}
 
-        group_names = list(survey["name"].loc[survey["type"] == "begin_group"])
+        group_names = list(self.survey["name"].loc[self.survey["type"] == "begin_group"])
         group_names = sorted(group_names, key=len, reverse=True)
 
-        column_names = sorted(list(set(survey["name"].loc[((survey["type"] != "begin_group") & (survey["type"] != "end_group") & (
-            survey["type"] != "begin_repeat") & (survey["type"] != "end_repeat"))]).difference(set([np.nan]))), key=len, reverse=True)
+        column_names = sorted(list(set(self.survey["name"].loc[((self.survey["type"] != "begin_group") & (self.survey["type"] != "end_group") & (
+            self.survey["type"] != "begin_repeat") & (self.survey["type"] != "end_repeat"))]).difference(set([np.nan]))), key=len, reverse=True)
 
 
         for k in repeats.keys():
             for i in repeats[k].columns:
                 # try:
                 a = i
-                b = survey["type"].loc[survey["name"] == a]
+                b = self.survey["type"].loc[self.survey["name"] == a]
                 if len(b) == 0:
                     pass
                 else:
@@ -421,7 +422,7 @@ class ODK():
             
             if process_datetimes:
 
-                for i in survey["name"].loc[survey["type"] == "datetime"]:
+                for i in self.survey["name"].loc[self.survey["type"] == "datetime"]:
                     if i in repeats[j].columns:
                         try:
                             repeats[j][i] = pd.to_datetime(
@@ -430,12 +431,12 @@ class ODK():
                             repeats[j][i] = pd.to_datetime(
                                 repeats[j][i], format="mixed")
 
-                for i in survey["name"].loc[survey["type"] == "date"]:
+                for i in self.survey["name"].loc[self.survey["type"] == "date"]:
                     if i in repeats[j].columns:
                         repeats[j][i] = pd.to_datetime(
                             repeats[j][i], format="%Y-%m-%d").dt.date
 
-                for i in survey["name"].loc[survey["type"] == "time"]:
+                for i in self.survey["name"].loc[self.survey["type"] == "time"]:
                     if i in repeats[j].columns:
                         repeats[j][i] = pd.to_datetime(
                             repeats[j][i], format="%H:%M:%S.%f%z").dt.time
@@ -443,10 +444,10 @@ class ODK():
         return repeats
 
     def process_all(self,variable='',time_variable='starttime'):
-
+        self.initialize()
         submissions = self.processing_submission()
-        survey = self.survey().dropna(how='all')
-        choices = self.choices()
+        survey = self.survey.dropna(how='all')
+        choices = self.choices
         repeats = self.processing_repeats()
         survey_name = self.form_name
         variable = variable
@@ -457,13 +458,13 @@ class ODK():
         return Form(submissions,survey,choices,repeats,survey_name,variable,time_variable,media,attachments)
 
     def save_main(self,data=None,path=""):
+        self.initialize()
 
         df = self.processing_submission() if type(data) == type(None) else data
-        survey = self.survey()
         a = []
         for j in df.columns:
-            if j in list(survey["name"]):
-                x = survey["label::English (en)"].loc[survey["name"] == j].iloc[0]
+            if j in list(self.survey["name"]):
+                x = self.survey["label::English (en)"].loc[self.survey["name"] == j].iloc[0]
                 a.append(x)
             else:
                 a.append(np.nan)
@@ -477,14 +478,14 @@ class ODK():
         save_to_excel(df_out, path+self.form_name+"_submissions.xlsx")
 
     def save_repeat(self,data=None, path=""):
+        self.initialize()
         repeats = self.processing_repeats() if type(data) == type(None) else data
-        survey = self.survey()
 
         for k in repeats.keys():
             a = []
             for j in repeats[k].columns:
-                if j in list(survey["name"]):
-                    x = survey["label::English (en)"].loc[survey["name"] == j].iloc[0]
+                if j in list(self.survey["name"]):
+                    x = self.survey["label::English (en)"].loc[self.survey["name"] == j].iloc[0]
                     a.append(x)
                 else:
                     a.append(np.nan)
@@ -498,14 +499,15 @@ class ODK():
             save_to_excel(rep_out, path+k+".xlsx")
 
     def save_data(self, path=""):
-        req = requests.get(self.url+'/v1/projects/'+str(self.get_project()) +
-                           "/forms/"+self.get_form()+".xlsx", headers=self.headers).content
+        self.initialize()
+        req = requests.get(self.url+'/v1/projects/'+str(self.project) +
+                           "/forms/"+self.form+".xlsx", headers=self.headers).content
 
         version = str(pd.read_excel(BytesIO(req),
                                     sheet_name="settings")["version"].iloc[0])
         req = (requests.post(self.url+'/v1/projects/' +
-                             str(self.get_project())+"/forms/" +
-                             self.get_form()+"/submissions.csv.zip?",
+                             str(self.project)+"/forms/" +
+                             self.form+"/submissions.csv.zip?",
                              headers=self.headers))
 
         file = open(path+self.form_name+"_v"+version+".zip", "wb")
@@ -543,6 +545,27 @@ class ODK():
                             headers=self.headers))
         return req
 
+
+    def get_parent_tag(self,tag):
+
+        self.initialize()
+        n = self.survey.loc[self.survey['name'] == tag].index[0]
+        begin_group = len(
+            self.survey.iloc[:n].loc[self.survey['type'] == 'begin_group'])
+        end_group = len(
+            self.survey.iloc[:n].loc[self.survey['type'] == 'end_group'])
+        begin_repeat = len(
+            self.survey.iloc[:n].loc[self.survey['type'] == 'begin_repeat'])
+        end_repeat = len(
+            self.survey.iloc[:n].loc[self.survey['type'] == 'end_repeat'])
+
+        if end_repeat < begin_repeat:
+            return (self.survey['name'].iloc[:n].loc[self.survey['type'] == 'begin_repeat']).iloc[-1]
+        elif end_group < begin_group:
+            return (self.survey['name'].iloc[:n].loc[self.survey['type'] == 'begin_group']).iloc[-1]
+        else:
+            return None
+
     def return_element(self,tree, data: str):
         for elem in tree.iter():
             if elem.tag == data:
@@ -552,13 +575,17 @@ class ODK():
         return None
 
     def modify_xml(self, xml, variable: str, function):
+        parent_tag = self.get_parent_tag(variable)
         tree = ET.parse(BytesIO(xml))
         d = self.return_element(tree, variable)
         if d == None:
             try:
                 if tree.find(variable) == None:
-                    root = tree.getroot()
-                    child = ET.Element(variable)
+                    if parent_tag==None:
+                        root = tree.getroot()
+                    else:
+                        root = tree.find(parent_tag)
+                    child = ET.SubElement(root,variable)
                     child.text = function(None)
                     root.append(child)
                 else:
@@ -615,3 +642,17 @@ class ODK():
             for i in range(len(variable)):
                 c = self.modify_xml(c, variable[i], func[i])
             self.put_submission(id, self.update_xml(c))
+
+    def drop_variable_xml(self, variable: str, id, project=None, form=None):
+        if (project != None) | (form != None):
+            self.set_target(project, form)
+            self.initialize()
+
+        c = self.get_submission_xml(id)
+        tree = ET.parse(BytesIO(c))
+        root = tree.getroot()
+        for elem in root.findall(variable):
+            root.remove(elem)
+        xml_out = BytesIO()
+        tree.write(xml_out, encoding='utf-8')
+        self.put_submission(id, self.update_xml(xml_out.getvalue()))
