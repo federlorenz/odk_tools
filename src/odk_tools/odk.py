@@ -145,7 +145,6 @@ class ODK():
 
         if xml:
             extension = '.xml'
-            version = ""
         else:
             extension = '.xlsx'
             version = str(pd.read_excel(BytesIO(req),
@@ -216,7 +215,8 @@ class ODK():
         attachments = {}
 
         for j in req.json():
-            attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' +str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content))
+            attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' + str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content)) if attachments[j["name"]].split(
+                ".")[-1] == "csv" else BytesIO((requests.get(self.url+'/v1/projects/' + str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content)
         return attachments
 
     def get_media(self):
