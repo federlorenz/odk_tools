@@ -579,23 +579,8 @@ class ODK():
         tree = ET.parse(BytesIO(xml))
         d = self.return_element(tree, variable)
         if d == None:
-            try:
-                if tree.find(variable) == None:
-                    if parent_tag==None:
-                        root = tree.getroot()
-                    else:
-                        root = tree.find(parent_tag)
-                    child = ET.SubElement(root,variable)
-                    child.text = function(None)
-                    root.append(child)
-                else:
-                    tree.find(variable).text = function(None)
-                xml_out = BytesIO()
-                tree.write(xml_out, encoding='utf-8')
-                return xml_out.getvalue()
-            except:
-                print('an error occurred while processing for variable ', variable)
-                return xml
+            print(f"{variable} is not in the xml")
+            return xml
         else:
             try:
                 k = d.text
@@ -660,3 +645,20 @@ class ODK():
         xml_out = BytesIO()
         tree.write(xml_out, encoding='utf-8')
         self.put_submission(id, self.update_xml(xml_out.getvalue()))
+
+    def add_variable_xml(self, variable: str, id, project=None, form=None, parent_tag=None):
+        if (project != None) | (form != None):
+            self.set_target(project, form)
+            self.initialize()
+
+        c = self.get_submission_xml(id)
+        tree = ET.parse(BytesIO(c))
+        root = tree.getroot()
+        if type(self.return_element(tree,variable)) == type(None):
+            if parent_tag == None:
+                child = ET.SubElement(root, variable)
+            else:
+                child = ET.SubElement(self.return_element(tree, parent_tag),variable)
+            xml_out = BytesIO()
+            tree.write(xml_out, encoding='utf-8')
+            self.put_submission(id, self.update_xml(xml_out.getvalue()))
