@@ -628,7 +628,7 @@ class ODK():
                 c = self.modify_xml(c, variable[i], func[i])
             self.put_submission(id, self.update_xml(c))
 
-    def drop_variable_xml(self, variable: str, id, project=None, form=None):
+    def drop_variable_xml(self, variable: str, id, project=None, form=None,parent_tag=None):
         if (project != None) | (form != None):
             self.set_target(project, form)
             self.initialize()
@@ -638,10 +638,10 @@ class ODK():
         root = tree.getroot()
         for elem in tree.iter():
             if elem.tag == variable:
-                if self.get_parent_tag(variable) == None:
+                if parent_tag == None:
                     root.remove(elem)
                 else:
-                    self.return_element(tree, self.get_parent_tag(variable)).remove(elem)
+                    self.return_element(tree, parent_tag).remove(elem)
         xml_out = BytesIO()
         tree.write(xml_out, encoding='utf-8')
         self.put_submission(id, self.update_xml(xml_out.getvalue()))
