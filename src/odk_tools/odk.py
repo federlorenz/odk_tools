@@ -651,8 +651,12 @@ class ODK():
         c = self.get_submission_xml(id)
         tree = ET.parse(BytesIO(c))
         root = tree.getroot()
-        for elem in root.findall(variable):
-            root.remove(elem)
+        for elem in tree.iter():
+            if elem.tag == variable:
+                if self.get_parent_tag(variable) == None:
+                    root.remove(elem)
+                else:
+                    self.return_element(tree, self.get_parent_tag(variable)).remove(elem)
         xml_out = BytesIO()
         tree.write(xml_out, encoding='utf-8')
         self.put_submission(id, self.update_xml(xml_out.getvalue()))
