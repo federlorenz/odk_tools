@@ -145,6 +145,7 @@ class ODK():
 
         if xml:
             extension = '.xml'
+            version = ""
         else:
             extension = '.xlsx'
             version = str(pd.read_excel(BytesIO(req),
