@@ -215,7 +215,7 @@ class ODK():
         attachments = {}
 
         for j in req.json():
-            attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' + str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content)) if attachments[j["name"]].split(
+            attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' + str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content)) if j["name"].split(
                 ".")[-1] == "csv" else BytesIO((requests.get(self.url+'/v1/projects/' + str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content)
         return attachments
 
