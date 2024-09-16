@@ -166,9 +166,9 @@ class ODK():
             self.project = self.get_project()
         if self.form == None:
             self.form = self.get_form()
-        if self.survey == None:
+        if type(self.survey) == type(None):
             self.survey = self.get_survey()
-        if self.choices ==  None:
+        if type(self.choices) ==  type(None):
             self.choiches = self.get_choices()
 
     def get_submissions(self):
