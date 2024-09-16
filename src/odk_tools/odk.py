@@ -91,6 +91,8 @@ class ODK():
 
     def __init__(self, url):
         self.url=url
+        self.form = None
+        self.project = None
 
     def connect(self, email, password):
 
@@ -139,47 +141,62 @@ class ODK():
 
         return form
 
-    def save_form(self, xlsx="form",path=""):
-        
-        req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers).content
-        
-        version = str(pd.read_excel(BytesIO(req),
-                    sheet_name="settings")["version"].iloc[0])
+    def save_form(self,path="", save_file=True, xml=False):
 
-        file = open(path+xlsx+"_v"+version+".xlsx", "wb")
-        file.write(req)
-        file.close()
+        if xml:
+            extension = '.xml'
+        else:
+            extension = '.xlsx'
+            version = str(pd.read_excel(BytesIO(req),
+                    sheet_name="settings")["version"].iloc[0])
+        
+        req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+extension, headers=self.headers).content
+
+        if save_file:
+            file = open(path+"form_v"+version+extension, "wb")
+            file.write(req)
+            file.close()
+        else:
+            return BytesIO(req)
+
+    def initialize(self):
+        if self.project == None:
+            self.project = self.get_project()
+        if self.form == None:
+            self.form = self.get_form()
 
     def get_submissions(self):
-
+        self.initialize()
         req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/"+self.get_form()+"/submissions.csv?",
+                            str(self.project)+"/forms/"+self.form+"/submissions.csv?",
                             headers=self.headers))
         df = pd.read_csv(BytesIO(req.content))
         return df
 
     def survey(self):
-        req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers)
+        self.initialize()
+        req = requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers)
         survey = pd.read_excel(BytesIO(req.content),na_values=[' ',''],keep_default_na=False).dropna(how='all')
         return survey
 
     def choices(self):
-        req = requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers)
+        self.initialize()
+        req = requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers)
         choices = pd.read_excel(BytesIO(req.content), sheet_name="choices", na_values=[
                                 ' ', ''], keep_default_na=False).dropna(how='all')
         return choices
     
     def get_repeats(self):
-
+        self.initialize()
         survey = self.survey()
         req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/"+self.get_form()+"/submissions.csv.zip?attachments=false",
+                            str(self.project)+"/forms/"+self.form+"/submissions.csv.zip?attachments=false",
                             headers=self.headers))
         zipfile = zip.ZipFile(BytesIO(req.content))
 
         repeats = {}
 
-        form_id = str(pd.read_excel(BytesIO(requests.get(self.url+'/v1/projects/'+str(self.get_project())+"/forms/"+self.get_form()+".xlsx", headers=self.headers).content),
+        form_id = str(pd.read_excel(BytesIO(requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers).content),
                     sheet_name="settings")["form_id"].iloc[0])
         
         for j in survey["name"].loc[survey["type"] == "begin_repeat"]:
@@ -189,25 +206,26 @@ class ODK():
         return repeats
 
     def get_attachments(self):
-
+        self.initialize()
         survey = self.survey()
         req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/"+self.get_form()+"/attachments",
+                            str(self.project)+"/forms/"+self.form+"/attachments",
                             headers=self.headers))
         
         attachments = {}
 
         for j in req.json():
-            attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' +str(self.get_project())+"/forms/"+self.get_form()+"/attachments/"+j["name"], headers=self.headers)).content))
+            attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(self.url+'/v1/projects/' +str(self.project)+"/forms/"+self.form+"/attachments/"+j["name"], headers=self.headers)).content))
         return attachments
 
     def get_media(self):
-        req = requests.get(self.url+'/v1/projects/'+str(self.get_project()) +
-                           "/forms/"+self.get_form()+".xlsx", headers=self.headers).content
+        self.initialize()
+        req = requests.get(self.url+'/v1/projects/'+str(self.project) +
+                           "/forms/"+self.form+".xlsx", headers=self.headers).content
 
         req = (requests.post(self.url+'/v1/projects/' +
-                             str(self.get_project())+"/forms/" +
-                             self.get_form()+"/submissions.csv.zip?",
+                             str(self.project)+"/forms/" +
+                             self.form+"/submissions.csv.zip?",
                              headers=self.headers))
         zipfile = zip.ZipFile(BytesIO(req.content))
         media = {}
@@ -494,29 +512,33 @@ class ODK():
         file.close()
 
     def listing_submissions(self):
+        self.initialize()
         req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/"+self.get_form()+"/submissions",
+                            str(self.project)+"/forms/"+self.form+"/submissions",
                             headers=self.headers))
         return req.json()
 
     def get_submission_metadata(self,instance):
+        self.initialize()
         req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/" +
-                            self.get_form()+"/submissions/"+instance,
+                            str(self.project)+"/forms/" +
+                            self.form+"/submissions/"+instance,
                             headers=self.headers))
         return req.json()
     
     def get_submission_xml(self,instance):
+        self.initialize()
         req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/" +
-                            self.get_form()+"/submissions/"+instance+".xml",
+                            str(self.project)+"/forms/" +
+                            self.form+"/submissions/"+instance+".xml",
                             headers=self.headers))
         return req.content
 
     def put_submission(self, instance, data):
+        self.initialize()
         req = (requests.put(url=self.url+'/v1/projects/' +
-                            str(self.get_project())+"/forms/" +
-                            self.get_form()+"/submissions/"+instance,data=data,
+                            str(self.project)+"/forms/" +
+                            self.form+"/submissions/"+instance,data=data,
                             headers=self.headers))
         return req
 
@@ -582,6 +604,7 @@ class ODK():
     def change_submission(self, variable: str | list[str], id, project=None, form=None, func: FunctionType = lambda x: x | list[FunctionType]):
         if (project != None) | (form != None):
             self.set_target(project, form)
+            self.initialize()
         if type(variable) == str:
             c = self.get_submission_xml(id)
             ff = self.modify_xml(c, variable, func)
