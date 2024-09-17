@@ -587,7 +587,7 @@ class ODK():
             self.put_submission(id, self.update_xml(xml))
 
 
-    def drop_variable_xml(self, xml,variable: str, id, project=None, form=None,parent_tag=None):
+    def drop_variable_xml(self, xml,variable: str,parent_tag=None):
 
         tree = ET.parse(BytesIO(xml))
         root = tree.getroot()
@@ -601,7 +601,7 @@ class ODK():
         tree.write(xml_out, encoding='utf-8')
         return xml_out.getvalue()
 
-    def add_variable_xml(self, xml, variable: str, id: str, parent_tag=None):
+    def add_variable_xml(self, xml, variable: str, parent_tag=None):
 
         tree = ET.parse(BytesIO(xml))
         root = tree.getroot()
