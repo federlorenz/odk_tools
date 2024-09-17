@@ -544,8 +544,7 @@ class ODK():
                 pass
         return None
 
-    def modify_xml(self, xml, variable: str, function):
-        parent_tag = self.get_parent_tag(variable)
+    def modify_variable_xml(self, xml, variable: str, function):
         tree = ET.parse(BytesIO(xml))
         d = self.return_element(tree, variable)
         if d == None:
