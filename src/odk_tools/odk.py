@@ -56,37 +56,7 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
 class ODK():
 
     """
-    The class is used to access the ODK server and download or upload data to projects.
-    class parameters:
-    url
 
-    class functions:\n
-    connect: connects to the webserver by providing username and password\n
-    set_target: defines the project and form to connect to\n
-    list_projects:\n
-    get_project:\n
-    list_forms:\n
-    get_form:\n
-    save_form:\n
-    save_data:\n
-    get_submissions:\n
-    survey:\n
-    choices:\n
-    get_repeats:\n
-    get_attachments:\n
-    processing_submission:\n
-    processing_repeats:\n
-    process_all:\n
-    save_main:\n
-    save_repeat:\n
-    listing_submissions:\n
-    get_submission_metadata:\n
-    get_submission_xml:\n
-    put_submission:\n
-    return_element:\n
-    modify_xml:\n
-    update_xml:\n
-    change_submission:\n
     """
 
     def __init__(self, url):
@@ -614,27 +584,13 @@ class ODK():
         tree.write(xml_out, encoding='utf-8')
         return xml_out.getvalue()
 
-    def change_submission(self, variable: str | list[str], id, project=None, form=None, func: FunctionType = lambda x: x | list[FunctionType]):
-        if (project != None) | (form != None):
-            self.set_target(project, form)
-            self.initialize()
-        if type(variable) == str:
-            c = self.get_submission_xml(id)
-            ff = self.modify_xml(c, variable, func)
-            self.put_submission(id, self.update_xml(ff))
-        else:
-            c = self.get_submission_xml(id)
-            for i in range(len(variable)):
-                c = self.modify_xml(c, variable[i], func[i])
-            self.put_submission(id, self.update_xml(c))
+    def change_submission(self, xml, id):
+            self.put_submission(id, self.update_xml(xml))
 
-    def drop_variable_xml(self, variable: str, id, project=None, form=None,parent_tag=None):
-        if (project != None) | (form != None):
-            self.set_target(project, form)
-            self.initialize()
 
-        c = self.get_submission_xml(id)
-        tree = ET.parse(BytesIO(c))
+    def drop_variable_xml(self, xml,variable: str, id, project=None, form=None,parent_tag=None):
+
+        tree = ET.parse(BytesIO(xml))
         root = tree.getroot()
         for elem in tree.iter():
             if elem.tag == variable:
@@ -644,15 +600,11 @@ class ODK():
                     self.return_element(tree, parent_tag).remove(elem)
         xml_out = BytesIO()
         tree.write(xml_out, encoding='utf-8')
-        self.put_submission(id, self.update_xml(xml_out.getvalue()))
+        return xml_out.getvalue()
 
-    def add_variable_xml(self, variable: str, id, project=None, form=None, parent_tag=None):
-        if (project != None) | (form != None):
-            self.set_target(project, form)
-            self.initialize()
+    def add_variable_xml(self, xml, variable: str, id: str, parent_tag=None):
 
-        c = self.get_submission_xml(id)
-        tree = ET.parse(BytesIO(c))
+        tree = ET.parse(BytesIO(xml))
         root = tree.getroot()
         if type(self.return_element(tree,variable)) == type(None):
             if parent_tag == None:
@@ -661,4 +613,5 @@ class ODK():
                 child = ET.SubElement(self.return_element(tree, parent_tag),variable)
             xml_out = BytesIO()
             tree.write(xml_out, encoding='utf-8')
-            self.put_submission(id, self.update_xml(xml_out.getvalue()))
+            return xml_out.getvalue()
+
