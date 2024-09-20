@@ -159,6 +159,7 @@ class ODK():
         req = requests.get(self.url+'/v1/projects/'+str(self.project)+"/forms/"+self.form+".xlsx", headers=self.headers)
         choices = pd.read_excel(BytesIO(req.content), sheet_name="choices", na_values=[
                                 ' ', ''], keep_default_na=False).dropna(how='all')
+        self.choices = choices
         return choices
     
     def get_repeats(self):
