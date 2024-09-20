@@ -55,10 +55,6 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
 
 class ODK():
 
-    """
-
-    """
-
     def __init__(self, url):
         self.url=url
         self.form = None
@@ -80,6 +76,12 @@ class ODK():
     def set_target(self, project_name, form_name):
         self.project_name = project_name
         self.form_name = form_name
+        self.project = self.get_project()
+        self.form = self.get_form()
+        self.survey = self.get_survey()
+        self.choiches = self.get_choices()
+
+
 
     def list_projects(self):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
@@ -131,18 +133,8 @@ class ODK():
         else:
             return BytesIO(req)
 
-    def initialize(self):
-        if self.project == None:
-            self.project = self.get_project()
-        if self.form == None:
-            self.form = self.get_form()
-        if type(self.survey) == type(None):
-            self.survey = self.get_survey()
-        if type(self.choices) ==  type(None):
-            self.choiches = self.get_choices()
-
     def get_submissions(self):
-        self.initialize()
+        
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/"+self.form+"/submissions.csv?",
                             headers=self.headers))
@@ -163,7 +155,7 @@ class ODK():
         return choices
     
     def get_repeats(self):
-        self.initialize()
+        
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/"+self.form+"/submissions.csv.zip?attachments=false",
                             headers=self.headers))
@@ -181,7 +173,7 @@ class ODK():
         return repeats
 
     def get_attachments(self):
-        self.initialize()
+        
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/"+self.form+"/attachments",
                             headers=self.headers))
@@ -194,7 +186,7 @@ class ODK():
         return attachments
 
     def get_media(self):
-        self.initialize()
+        
         req = requests.get(self.url+'/v1/projects/'+str(self.project) +
                            "/forms/"+self.form+".xlsx", headers=self.headers).content
 
@@ -210,7 +202,7 @@ class ODK():
         return media
 
     def processing_submission(self,process_datetimes=False):
-        self.initialize()
+        
         df = self.get_submissions()
 
         def remove_tail(list_in):
@@ -319,7 +311,7 @@ class ODK():
         return df
 
     def processing_repeats(self, data=None, process_datetimes=False):
-        self.initialize()
+        
         repeats = self.get_repeats()
         df = self.processing_submission() if type(data) == type(None) else data
         set_not_rejected = list(df["KEY"])
@@ -415,7 +407,7 @@ class ODK():
         return repeats
 
     def process_all(self,variable='',time_variable='starttime'):
-        self.initialize()
+        
         submissions = self.processing_submission()
         survey = self.survey.dropna(how='all')
         choices = self.choices
@@ -429,7 +421,7 @@ class ODK():
         return Form(submissions,survey,choices,repeats,survey_name,variable,time_variable,media,attachments)
 
     def save_main(self,data=None,path=""):
-        self.initialize()
+        
 
         df = self.processing_submission() if type(data) == type(None) else data
         a = []
@@ -449,7 +441,7 @@ class ODK():
         save_to_excel(df_out, path+self.form_name+"_submissions.xlsx")
 
     def save_repeat(self,data=None, path=""):
-        self.initialize()
+        
         repeats = self.processing_repeats() if type(data) == type(None) else data
 
         for k in repeats.keys():
@@ -470,7 +462,7 @@ class ODK():
             save_to_excel(rep_out, path+k+".xlsx")
 
     def save_data(self, path=""):
-        self.initialize()
+        
         req = requests.get(self.url+'/v1/projects/'+str(self.project) +
                            "/forms/"+self.form+".xlsx", headers=self.headers).content
 
@@ -486,14 +478,14 @@ class ODK():
         file.close()
 
     def listing_submissions(self):
-        self.initialize()
+        
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/"+self.form+"/submissions",
                             headers=self.headers))
         return req.json()
 
     def get_submission_metadata(self,instance):
-        self.initialize()
+        
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/" +
                             self.form+"/submissions/"+instance,
@@ -501,7 +493,7 @@ class ODK():
         return req.json()
     
     def get_submission_xml(self,instance):
-        self.initialize()
+        
         req = (requests.get(self.url+'/v1/projects/' +
                             str(self.project)+"/forms/" +
                             self.form+"/submissions/"+instance+".xml",
@@ -509,7 +501,7 @@ class ODK():
         return req.content
 
     def put_submission(self, instance, data):
-        self.initialize()
+        
         req = (requests.put(url=self.url+'/v1/projects/' +
                             str(self.project)+"/forms/" +
                             self.form+"/submissions/"+instance,data=data,
@@ -519,7 +511,7 @@ class ODK():
 
     def get_parent_tag(self,tag):
 
-        self.initialize()
+        
         n = self.survey.loc[self.survey['name'] == tag].index[0]
         begin_group = len(
             self.survey.iloc[:n].loc[self.survey['type'] == 'begin_group'])
