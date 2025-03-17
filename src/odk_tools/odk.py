@@ -406,9 +406,9 @@ class ODK():
 
         return repeats
 
-    def process_all(self,variable='',time_variable='starttime'):
+    def process_all(self, variable='', time_variable='start', process_datetimes=False):
         
-        submissions = self.processing_submission()
+        submissions = self.processing_submission(process_datetimes=process_datetimes)
         survey = self.survey.dropna(how='all')
         choices = self.choices
         repeats = self.processing_repeats()
