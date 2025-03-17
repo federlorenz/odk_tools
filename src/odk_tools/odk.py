@@ -438,6 +438,12 @@ class ODK():
         
 
         df = self.processing_submission() if type(data) == type(None) else data
+
+        df_out = copy.deepcopy(df)
+
+        for j in df_out.select_dtypes(include=['datetime64', 'datetimetz']).columns:
+            df_out[j] = df_out[j].astype(str)
+
         a = []
         for j in df.columns:
             if j in list(self.survey["name"]):
@@ -445,8 +451,6 @@ class ODK():
                 a.append(x)
             else:
                 a.append(np.nan)
-
-        df_out = copy.deepcopy(df)
 
         df_out.loc[-1] = a
 
@@ -459,6 +463,12 @@ class ODK():
         repeats = self.processing_repeats() if type(data) == type(None) else data
 
         for k in repeats.keys():
+
+            rep_out = copy.deepcopy(repeats[k])
+
+            for j in rep_out.select_dtypes(include=['datetime64', 'datetimetz']).columns:
+                rep_out[j] = rep_out[j].astype(str)
+
             a = []
             for j in repeats[k].columns:
                 if j in list(self.survey["name"]):
@@ -466,8 +476,6 @@ class ODK():
                     a.append(x)
                 else:
                     a.append(np.nan)
-
-            rep_out = copy.deepcopy(repeats[k])
 
             rep_out.loc[-1] = a
 
