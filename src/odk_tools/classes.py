@@ -78,23 +78,26 @@ class Form():
             date_end=None,
             day=None):
         if date_start is not None:
-            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].date() >= date_start])
+            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(lambda x:x.date()) >= date_start])
         if date_end is not None:
-            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].date() <= date_end])
+            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(
+                lambda x: x.date()) <= date_end])
         if (time_start is not None) & (time_end is not None):
             if time_start > time_end:
-                submissions = copy.copy(self.submissions.loc[(self.submissions[self.time_variable].time() >= time_start)
-                                | (self.submissions[self.time_variable].time() < time_end)])
+                submissions = copy.copy(self.submissions.loc[(self.submissions[self.time_variable].map(lambda x: x.time()) >= time_start)
+                                                             | (self.submissions[self.time_variable].map(lambda x: x.time()) < time_end)])
             else:
-                submissions = copy.copy(self.submissions.loc[(self.submissions[self.time_variable].time() >= time_start)
-                                & (self.submissions[self.time_variable].time() < time_end)])
+                submissions = copy.copy(self.submissions.loc[(self.submissions[self.time_variable].map(lambda x: x.time()) >= time_start)
+                                                             & (self.submissions[self.time_variable].map(lambda x: x.time()) < time_end)])
         if (time_start is not None) & (time_end is None):
-            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].time() >= time_start])
+            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(
+                lambda x: x.time()) >= time_start])
         if (time_start is None) & (time_end is not None):
-            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].time() <= time_end])
+            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(
+                lambda x: x.time()) <= time_end])
 
         if day is not None:
-            submissions = copy.copy(self.submissions.loc[[a in day for a in [self.submissions[self.time_variable][i].date().isoweekday()
+            submissions = copy.copy(self.submissions.loc[[a in day for a in [self.submissions[self.time_variable][i].map(lambda x: x.date().isoweekday())
                                                 for i in range(len(self.submissions[self.time_variable]))]]])
         set_not_rejected = list(submissions["KEY"])
         reps = copy.copy(self.repeats)
