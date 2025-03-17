@@ -302,11 +302,16 @@ class ODK():
                     df[j] = pd.to_datetime(df[j], format="mixed")
 
             for j in self.survey["name"].loc[self.survey["type"] == "date"]:
-                df[j] = pd.to_datetime(df[j], format="%Y-%m-%d").dt.date
+                try:
+                    df[j] = pd.to_datetime(df[j], format="%Y-%m-%d").dt.date
+                except:
+                    pass
 
             for j in self.survey["name"].loc[self.survey["type"] == "time"]:
-                df[j] = pd.to_datetime(df[j], format="%H:%M:%S.%f%z").dt.time
-        
+                try:
+                    df[j] = pd.to_datetime(df[j], format="%H:%M:%S.%f%z").dt.time
+                except:
+                    pass
         
         return df
 
@@ -396,13 +401,22 @@ class ODK():
 
                 for i in self.survey["name"].loc[self.survey["type"] == "date"]:
                     if i in repeats[j].columns:
-                        repeats[j][i] = pd.to_datetime(
-                            repeats[j][i], format="%Y-%m-%d").dt.date
+                        try:
+                            repeats[j][i] = pd.to_datetime(
+                                repeats[j][i], format="%Y-%m-%d").dt.date
+                        except:
+                            repeats[j][i] = pd.to_datetime(
+                                repeats[j][i], format="mixed").dt.date
 
                 for i in self.survey["name"].loc[self.survey["type"] == "time"]:
                     if i in repeats[j].columns:
-                        repeats[j][i] = pd.to_datetime(
-                            repeats[j][i], format="%H:%M:%S.%f%z").dt.time
+                        try:
+                            repeats[j][i] = pd.to_datetime(
+                                repeats[j][i], format="%H:%M:%S.%f%z").dt.time
+                        except:
+                            repeats[j][i] = pd.to_datetime(
+                                repeats[j][i], format="mixed").dt.time
+
 
         return repeats
 
@@ -411,7 +425,7 @@ class ODK():
         submissions = self.processing_submission(process_datetimes=process_datetimes)
         survey = self.survey.dropna(how='all')
         choices = self.choices
-        repeats = self.processing_repeats()
+        repeats = self.processing_repeats(process_datetimes=process_datetimes)
         survey_name = self.form_name
         variable = variable
         time_variable = time_variable
