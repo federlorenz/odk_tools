@@ -443,7 +443,7 @@ class ODK():
 
         for j in df_out.select_dtypes(include=['datetime64', 'datetimetz']).columns:
             df_out[j] = df_out[j].astype(str)
-
+        df_out['start'] = df_out['start'].astype(str)
         a = []
         for j in df.columns:
             if j in list(self.survey["name"]):
