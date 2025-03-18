@@ -107,7 +107,7 @@ class Form():
 
         media = copy.copy(self.media)
         media = {key: value for key, value in media.items(
-        ) if key[:-4] in self.get_media(submissions, reps)}
+        ) if key in self.get_media(submissions, reps)}
 
         return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, attachments=self.attachments)
 
