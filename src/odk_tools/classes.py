@@ -8,6 +8,7 @@ import numpy as np
 import datetime
 import os
 
+
 class Form():
 
     """
@@ -18,25 +19,27 @@ class Form():
     survey_name
     choices
     survey
+    settings
     media
     attachments
     """
 
-    def __init__(self, submissions, survey, choices, repeats, survey_name, variable, time_variable, media, attachments) -> None:
-        self.submissions =submissions
+    def __init__(self, submissions, survey, choices, settings, repeats, survey_name, variable, time_variable, media, attachments) -> None:
+        self.submissions = submissions
         self.repeats = repeats
         self.variable = variable
         self.time_variable = time_variable
         self.survey_name = survey_name
         self.survey = survey
         self.choices = choices
+        self.settings = settings
         self.media = media
         self.attachments = attachments
 
     @property
     def _constructor(self):
         return Form
-    
+
     def get_media(self, subs, reps):
         names = list(self.survey['name'].loc[(
             self.survey['type'] == 'image') | (self.survey['type'] == 'audio') | (self.survey['type'] == 'video')])
@@ -54,7 +57,7 @@ class Form():
         if len(self.media.items()) != 0:
             if 'media' not in os.listdir(path):
                 os.mkdir(path+'media')
-            for key,value in self.media.items():
+            for key, value in self.media.items():
                 file = open(path+'./media/'+key, "wb")
                 file.write(value)
                 file.close()
@@ -63,12 +66,14 @@ class Form():
         submissions = copy.copy(
             self.submissions.loc[self.submissions[self.variable] == x])
         set_not_rejected = list(submissions["KEY"])
-        reps =copy.copy(self.repeats)
+        reps = copy.copy(self.repeats)
         for j in reps.keys():
-            reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split("/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
+            reps[j] = reps[j].loc[[True if reps[j]["PARENT_KEY"].iloc[i].split(
+                "/")[0] in set_not_rejected else False for i in range(len(reps[j]))]]
         media = copy.copy(self.media)
-        media = {key:value for key,value in media.items() if key in self.get_media(submissions,reps)}
-        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices,attachments=self.attachments)
+        media = {key: value for key, value in media.items(
+        ) if key in self.get_media(submissions, reps)}
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
 
     def date_time_filter(
             self,
@@ -78,7 +83,8 @@ class Form():
             date_end=None,
             day=None):
         if date_start is not None:
-            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(lambda x:x.date()) >= date_start])
+            submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(
+                lambda x: x.date()) >= date_start])
         if date_end is not None:
             submissions = copy.copy(self.submissions.loc[self.submissions[self.time_variable].map(
                 lambda x: x.date()) <= date_end])
@@ -98,7 +104,7 @@ class Form():
 
         if day is not None:
             submissions = copy.copy(self.submissions.loc[[a in day for a in [self.submissions[self.time_variable][i].map(lambda x: x.date().isoweekday())
-                                                for i in range(len(self.submissions[self.time_variable]))]]])
+                                                                             for i in range(len(self.submissions[self.time_variable]))]]])
         set_not_rejected = list(submissions["KEY"])
         reps = copy.copy(self.repeats)
         for j in reps.keys():
@@ -109,7 +115,7 @@ class Form():
         media = {key: value for key, value in media.items(
         ) if key in self.get_media(submissions, reps)}
 
-        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, attachments=self.attachments)
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
 
     def pdf_summary(self, directory=''):
 
@@ -141,8 +147,8 @@ class Form():
 
         def reindex(input, var, choices=self.choices):
             if question_type(var)[0] == "select_one":
-                selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x:x.strip())
-                                                            == question_type(var)[1]]
+                selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
+                                                             == question_type(var)[1]]
                 input = input.reindex(selects)
             if question_type(var)[0] == "integer":
                 input = input.sort_index()
@@ -150,7 +156,7 @@ class Form():
                 input = input.sort_index()
             if question_type(var)[0] == "select_multiple":
                 selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
-                                                            == question_type(var)[1]]
+                                                             == question_type(var)[1]]
                 input = input.reindex(selects)
             if question_type(var)[0] == "select_one_from_file":
                 selects = choices["label::English (en)"].loc[choices["list_name"].map(lambda x: x.strip())
@@ -173,7 +179,8 @@ class Form():
                 a = data[var].loc[~data[var].isna()].value_counts()
                 a = reindex(a, var).fillna(0)
             else:
-                a = multiprocess(data[var].loc[~data[var].isna()]).value_counts()
+                a = multiprocess(
+                    data[var].loc[~data[var].isna()]).value_counts()
                 a = reindex(a, var).fillna(0)
             return len(a.index)
 
@@ -182,7 +189,8 @@ class Form():
                 a = data[var].loc[~data[var].isna()].value_counts()
                 a = reindex(a, var).fillna(0)
             else:
-                a = multiprocess(data[var].loc[~data[var].isna()]).value_counts()
+                a = multiprocess(
+                    data[var].loc[~data[var].isna()]).value_counts()
                 a = reindex(a, var).fillna(0)
             title = group_text(
                 survey["label::English (en)"].loc[survey["name"] == var].iloc[0], title_group)
@@ -192,7 +200,7 @@ class Form():
                 ax.set_xlabel("(total="+str(a.sum())+")", labelpad=1)
             else:
                 ax.pie(x=a.values, labels=labels,
-                    autopct=lambda x: '{:.0f}'.format(x*a.values.sum()/100))
+                       autopct=lambda x: '{:.0f}'.format(x*a.values.sum()/100))
                 ax.set_title(title)
                 ax.set_xlabel("(total="+str(a.sum())+")", labelpad=1)
 
@@ -201,7 +209,8 @@ class Form():
                 a = data[var].loc[~data[var].isna()].value_counts()
                 a = reindex(a, var).fillna(0)
             else:
-                a = multiprocess(data[var].loc[~data[var].isna()]).value_counts()
+                a = multiprocess(
+                    data[var].loc[~data[var].isna()]).value_counts()
                 a = reindex(a, var).fillna(0)
             title = group_text(
                 survey["label::English (en)"].loc[survey["name"] == var].iloc[0], title_group)
@@ -244,7 +253,7 @@ class Form():
 
             gs = gridspec.GridSpec(nrows=1, ncols=1)
             fig = plt.figure(figsize=(inches(width)*gs.nrows,
-                                    inches(height)*gs.ncols))
+                                      inches(height)*gs.ncols))
 
             for i in range(0, gs.nrows*gs.ncols):
                 ax = plt.subplot(gs[i//gs.ncols, i % gs.ncols])
@@ -256,7 +265,7 @@ class Form():
                         label_group=label_group)
                 elif typ == "hist":
                     hist(ax, var, data=data, title_group=title_group,
-                        label_group=label_group)
+                         label_group=label_group)
             gs.tight_layout(fig)
             b = BytesIO()
             plt.savefig(b, format="png")
@@ -291,7 +300,8 @@ class Form():
                     pdf.ln(10)
                     break
             else:
-                figu, figuHeight = fig_wrap(i, data=self.submissions, typ=print_dic[i])
+                figu, figuHeight = fig_wrap(
+                    i, data=self.submissions, typ=print_dic[i])
                 pdf.set_x(105-100)
                 pdf.image(figu, w=200, h=figuHeight*10)
                 pdf.ln(10)
@@ -337,7 +347,7 @@ class Form():
             for j in df.columns:
                 if j in list(survey["name"]):
                     x = survey[variable].loc[survey["name"]
-                                                          == j].iloc[0]
+                                             == j].iloc[0]
                     a.append(x)
                 else:
                     a.append(np.nan)
@@ -356,7 +366,7 @@ class Form():
                 for j in reps[k].columns:
                     if j in list(survey["name"]):
                         x = survey[variable].loc[survey["name"]
-                                                              == j].iloc[0]
+                                                 == j].iloc[0]
                         a.append(x)
                     else:
                         a.append(np.nan)
@@ -368,7 +378,6 @@ class Form():
                     rep_out.loc[-2] = a
                     rep_out.sort_index(inplace=True)
                 reps[k] = rep_out
-
 
         if variable == None:
             new_labels = pd.MultiIndex.from_arrays(
@@ -388,11 +397,11 @@ class Form():
                 reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[1:]
         else:
             new_labels = pd.MultiIndex.from_arrays(
-                [df_out.columns, df_out.iloc[0], df_out.iloc[1]], names=['code', 'variable','question'])
+                [df_out.columns, df_out.iloc[0], df_out.iloc[1]], names=['code', 'variable', 'question'])
             df_out = df_out.set_axis(new_labels, axis=1).iloc[2:]
             for k in reps.keys():
                 new_labels = pd.MultiIndex.from_arrays(
-                    [reps[k].columns, reps[k].iloc[0],reps[k].iloc[1]], names=['code', 'variable','question'])
+                    [reps[k].columns, reps[k].iloc[0], reps[k].iloc[1]], names=['code', 'variable', 'question'])
                 reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[2:]
 
-        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, media=self.media, attachments=self.attachments)
+        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, settings=self.settings, media=self.media, attachments=self.attachments)
