@@ -299,7 +299,7 @@ class process_questionnaire():
                         r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
                     table.rows[index+1 -
                                index_counter].cells[5]._tc.get_or_add_tcPr().append(shading_elm_5)
-                elif (sss == "calculation"):
+                elif (sss == "calculate"):
                     shading_elm_0 = parse_xml(
                         r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
                     table.rows[index+1 -
