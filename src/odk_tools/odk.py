@@ -135,11 +135,21 @@ class process_questionnaire():
             choice_labels = list(
                 self.choices["name"].loc[self.choices["list_name"] == choice].map(str))
             zipped = list(zip(choice_labels, choice_names))
-            zipped = "\n".join([" = ".join(x) for x in zipped])
+            zipped = [" = ".join(x) for x in zipped]
+            if len(zipped) > 50:
+                zipped1 = zipped[0:25]
+                zipped2 = zipped[-25:-1]
+                zipped = zipped1+["...The list is longer than 50, some elements are omitted..."]+zipped2
+            zipped = "\n".join(zipped)
             return zipped
 
         def get_from_file(file):
             choice_list = list(self.attachments[file]["label"].map(str))
+            if len(choice_list) > 50:
+                choice_list1 = choice_list[0:25]
+                choice_list2 = choice_list[-25:-1]
+                choice_list = choice_list1 + \
+                    ["...The list is longer than 50, some elements are omitted..."]+choice_list2
             return "\n".join(choice_list)
 
         def process_enclosing_variables(data):
