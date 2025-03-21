@@ -131,7 +131,7 @@ class process_questionnaire():
 
         def get_choices(choice):
             choice_names = list(
-                self.choices["label::English (en)"].loc[self.choices["list_name"] == choice])
+                self.choices["label::English (en)"].loc[self.choices["list_name"] == choice].map(str))
             choice_labels = list(
                 self.choices["name"].loc[self.choices["list_name"] == choice].map(str))
             zipped = list(zip(choice_labels, choice_names))
@@ -139,7 +139,7 @@ class process_questionnaire():
             return zipped
 
         def get_from_file(file):
-            choice_list = list(self.attachments[file]["label"])
+            choice_list = list(self.attachments[file]["label"].map(str))
             return "\n".join(choice_list)
 
         def process_enclosing_variables(data):
