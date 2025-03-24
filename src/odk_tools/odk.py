@@ -475,13 +475,18 @@ class ODK():
                       for i in range(len(req.json()))]
         return versions,created_at
 
-    def set_form_version(self, version=published_form_versions()[0][0]):
+    def set_form_version(self, version=None):
+        if version == None:
+            version = self.published_form_versions()[0][0]
         self.survey = self.get_survey(version)
         self.choiches = self.get_choices(version)
         self.settings = self.get_settings(version)
         self.attachments = self.get_attachments(version)
 
-    def save_form(self, path="", save_file=True, xml=False, version=published_form_versions()[0][0]):
+    def save_form(self, path="", save_file=True, xml=False, version=None):
+
+        if version == None:
+            version = self.published_form_versions()[0][0]
 
         if xml:
             extension = '.xml'
@@ -506,7 +511,10 @@ class ODK():
         df = pd.read_csv(BytesIO(req.content))
         return df
 
-    def get_survey(self, version=published_form_versions()[0][0]):
+    def get_survey(self, version=None):
+        if version == None:
+            version = self.published_form_versions()[0][0]
+
         req = requests.get(
             f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}.xlsx", headers=self.headers)
         survey = pd.read_excel(BytesIO(req.content), na_values=[
@@ -514,7 +522,11 @@ class ODK():
         self.survey = survey
         return survey
 
-    def get_choices(self, version=published_form_versions()[0][0]):
+    def get_choices(self, version=None):
+
+        if version == None:
+            version = self.published_form_versions()[0][0]
+
         req = requests.get(
             f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}.xlsx", headers=self.headers)
         choices = pd.read_excel(BytesIO(req.content), sheet_name="choices", na_values=[
@@ -522,7 +534,11 @@ class ODK():
         self.choices = choices
         return choices
 
-    def get_settings(self, version=published_form_versions()[0][0]):
+    def get_settings(self, version=None):#
+
+        if version == None:
+            version = self.published_form_versions()[0][0]
+        
         req = requests.get(
             f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}.xlsx", headers=self.headers)
         settings = pd.read_excel(BytesIO(req.content), sheet_name="settings", na_values=[
@@ -549,7 +565,11 @@ class ODK():
 
         return repeats
 
-    def get_attachments(self,version=published_form_versions()[0][0]):
+    def get_attachments(self,version=None):
+
+        if version == None:
+            version = self.published_form_versions()[0][0]
+
         req = requests.get(
             f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments", headers=self.headers)
 
