@@ -19,7 +19,7 @@ from re import findall
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import RGBColor
-
+from docx.shared import Pt
 
 # %% #@ Functions
 
@@ -166,10 +166,18 @@ class process_questionnaire():
 
         def process_string_only(column, index, cell_index):
             if not pd.isna(s[column].iloc[index]):
-                row_cells[cell_index].text = process_enclosing_variables(
-                    str(s[column].iloc[index]))
+
+                paragraph = row_cells[cell_index].paragraphs[0]
+                run = paragraph.add_run(process_enclosing_variables(
+                    str(s[column].iloc[index])))
+                if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                    run.italics = True
+                    run.font.size = Pt(8)
             else:
-                row_cells[cell_index].text = ""
+                run = paragraph.add_run("")
+                if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                    run.italics = True
+                    run.font.size = Pt(8)
 
         def process_string_only_combined(cells, index):
             columns_names = ["Skip logic: ", "Default value: ", "Constrain value: ",
@@ -186,12 +194,18 @@ class process_questionnaire():
                     run = paragraph.add_run(columns_names[j])
                     run.italics = True
                     run.font.color.rgb = RGBColor(50, 0, 255)
+                    if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                        run.font.size = Pt(8)
                     if column_labels[j] == "constraint":
                         run = paragraph.add_run(
                             f"{process_current_input(process_enclosing_variables(str(self.survey[column_labels[j]].iloc[index])))}")
+                        if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                            run.font.size = Pt(8)
                     else:
                         run = paragraph.add_run(
                             f"{process_enclosing_variables(str(self.survey[column_labels[j]].iloc[index]))}")
+                        if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                            run.font.size = Pt(8)
                     count -= 1
                     if count != 0:
                         run = paragraph.add_run("\n")
@@ -369,11 +383,22 @@ class process_questionnaire():
             else:
                 row_cells = table.add_row().cells
                 cell_shading(index=i, index_counter=index_counter)
-                row_cells[0].text = s["name"].iloc[i] if not pd.isna(
-                    s["name"].iloc[i]) else ""
-                row_cells[1].text = s["type"].iloc[i].split(" ")[0]
+                paragraph = row_cells[0].paragraphs[0]
+                run = paragraph.add_run(s["name"].iloc[i] if not pd.isna(
+                    s["name"].iloc[i]) else "")
+                if self.survey["type"].iloc[i].split(" ")[0] == "calculate":
+                    run.italics = True
+                    run.font.size = Pt(8)
+
+                paragraph = row_cells[1].paragraphs[0]
+                run = paragraph.add_run(s["type"].iloc[i].split(" ")[0])
+                if self.survey["type"].iloc[i].split(" ")[0] == "calculate":
+                    run.italics = True
+                    run.font.size = Pt(8)
+
                 process_string_only("label::English (en)", i, 2)
                 process_string_only("hint::English (en)", i, 3)
+
                 if (s["type"].iloc[i].split(" ")[0] == "select_one") or (s["type"].iloc[i].split(" ")[0] == "select_multiple"):
                     row_cells[4].text = get_choices(
                         s["type"].iloc[i].split(" ")[1])
