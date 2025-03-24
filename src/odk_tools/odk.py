@@ -20,6 +20,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import RGBColor
 from docx.shared import Pt
+from docx.enum.table import WD_ALIGN_VERTICAL
 
 # %% #@ Functions
 
@@ -68,6 +69,7 @@ class process_questionnaire():
         self.settings = None
         self.form_title = None
         self.form_version = None
+        self.languages = None
 
     def get_data_from_files(self, form_filename, attachements_list_filenames):
         survey = pd.read_excel(form_filename, na_values=[
@@ -94,17 +96,14 @@ class process_questionnaire():
         self.form_version = self.settings['version'].iloc[0]
         self.attachments = odk_object.attachments
 
-    def process(self):
+    def get_languages(self):
+        language =[]
+        for column in self.survey.columns:
+            if column[:5] == "label":
+                language.append(column.split("::")[1])
+        self.languages = list(set(language))
 
-        def set_repeat_table_header(row):
-            """ set repeat table row on every new page
-            """
-            tr = row._tr
-            trPr = tr.get_or_add_trPr()
-            tblHeader = OxmlElement('w:tblHeader')
-            tblHeader.set(qn('w:val'), "true")
-            trPr.append(tblHeader)
-            return row
+    def process(self,highlight_color = {"begin_group":"4F81BD","end_group":"B8CCE4","begin_repeat":"9BBB59","end_repeat":"D6E3BC","calculate":"D9D9D9","header_row":"919191"},language=None,paragraph_spacing_points=3,compress_long_choices=True):
 
         document = dcx.Document()
         section = document.sections[-1]
@@ -116,9 +115,117 @@ class process_questionnaire():
         section.bottom_margin = dcx.shared.Cm(0.5)
         section.left_margin = dcx.shared.Cm(1)
         section.right_margin = dcx.shared.Cm(1)
-        heading = document.add_heading(
-            f"Form title = {self.form_title}\nForm version = {str(self.form_version)}\n\n")
+        heading = document.add_heading(f"Form title = {self.form_title}\nForm version = {str(self.form_version)}{"\n" if language==None else "\nForm language = "+language.split(" ")[0]}\n\n")
         heading.alignment = 1
+
+        p = document.add_heading('Headings explained', level=2)
+
+        p = document.add_paragraph()
+        run = p.add_run('Question code')
+        run.bold = True
+        run = p.add_run(': The code used to identify the question')
+        run.italic = True
+        run = p.add_run('\n')
+        run.italic = True
+
+        run = p.add_run('Question type')
+        run.bold = True
+        run = p.add_run(': The question type. Common types are "text", "integer", "select_one", "select_multiple", "date", "time", "image, Note". Questions of type "calculate" are internal variables used in ODK to process calculations and should be ignored for the purpose of reviewing the questionnaire.')
+        run.italic = True
+        run = p.add_run('\n')
+        run.italic = True
+
+        run = p.add_run('Question')
+        run.bold = True
+        run = p.add_run(': The question label in the specified language (default language English)')
+        run.italic = True
+        run = p.add_run('\n')
+        run.italic = True
+
+        run = p.add_run('Hint')
+        run.bold = True
+        run = p.add_run(': The hint in the specified language (default language English)')
+        run.italic = True
+        run = p.add_run('\n')
+        run.italic = True
+
+        run = p.add_run('Select options')
+        run.bold = True
+        run = p.add_run(': For questions of type select_one or select_multiple, these are the options that can be selected.')
+        run.italic = True
+        run = p.add_run('\n')
+        run.italic = True
+
+        run = p.add_run('Logic')
+        run.bold = True
+        run = p.add_run(': These are the logics defined for the question. Different logic can be defined. ')
+        run.italic = True
+        run = p.add_run('Relevant')
+        run.font.color.rgb = RGBColor(50, 0, 255)
+        run.italic = True
+        run = p.add_run(' defines the logic for showing the question or not. ')
+        run.italic = True
+        run = p.add_run('Default value')
+        run.font.color.rgb = RGBColor(50, 0, 255)
+        run.italic = True
+        run = p.add_run(' is the value that the question assumes by default. ')
+        run.italic = True
+        run = p.add_run('Constrain value')
+        run.font.color.rgb = RGBColor(50, 0, 255)
+        run.italic = True
+        run = p.add_run(' specifies the limits imposed on the values that can be typed in. ')
+        run.italic = True
+        run = p.add_run('Calculation')
+        run.font.color.rgb = RGBColor(50, 0, 255)
+        run.italic = True
+        run = p.add_run(' specifies the calculations for questions of type calculate. ')
+        run.italic = True
+        run = p.add_run('Choice filter')
+        run.font.color.rgb = RGBColor(50, 0, 255)
+        run.italic = True
+        run = p.add_run(' specifies if the selectable options for questions of type select_one or select_multiple should be shown according to some logic. ')
+        run.italic = True
+        run = p.add_run('Repeat count')
+        run.font.color.rgb = RGBColor(50, 0, 255)
+        run.italic = True
+        run = p.add_run(' specifies the number of times that a repeat block is repeated. ')
+        run.italic = True
+        run = p.add_run('\n')
+        run.italic = True
+
+        p = document.add_heading('Rows highlighting explained', level=2)
+
+        legend = document.add_table(rows=0, cols=2)
+        for k,v in {"A block of questions begins":"4F81BD",
+                    "A block of questions ends":"B8CCE4",
+                    "A repeated block of questions begins":"9BBB59",
+                    "A repeated block fo questions ends":"D6E3BC",
+                    "A questions of type \"calculate\"":"D9D9D9",
+                    "The table headers":"919191"}.items():
+            row_cells = legend.add_row().cells
+            paragraph = row_cells[1].paragraphs[0]
+            paragraph_format = paragraph.paragraph_format
+            paragraph_format.space_after = Pt(0)
+            run = paragraph.add_run(k)
+            row_cells[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            paragraph = row_cells[0].paragraphs[0]
+            paragraph_format = paragraph.paragraph_format
+            paragraph_format.space_after = Pt(0)
+            shading_elm = parse_xml(f'<w:shd {nsdecls('w')} w:fill="{v}"/>')
+            legend.rows[-1].cells[0]._tc.get_or_add_tcPr().append(shading_elm)
+
+        for cell in legend.columns[0].cells:
+            cell.width = dcx.shared.Cm(2)
+        for row in legend.rows:
+            row.height = dcx.shared.Cm(1)
+
+        p = document.add_paragraph()
+        run = p.add_run('\n')
+        run = p.add_run('\n')
+        run = p.add_run('\n')
+        run.italic = True
+
+
         table = document.add_table(rows=1, cols=6)
         table.style = "Table Grid"
         title_cells = table.rows[0].cells
@@ -129,27 +236,40 @@ class process_questionnaire():
             run = paragraph.add_run(headings[i])
             run.bold = True
 
+
+        def set_repeat_table_header(row):
+            """ set repeat table row on every new page
+            """
+            tr = row._tr
+            trPr = tr.get_or_add_trPr()
+            tblHeader = OxmlElement('w:tblHeader')
+            tblHeader.set(qn('w:val'), "true")
+            trPr.append(tblHeader)
+            return row
+
         def get_choices(choice):
             choice_names = list(
-                self.choices["label::English (en)"].loc[self.choices["list_name"] == choice].map(str))
+                self.choices[f"label{"" if language == None else "::"+language}"].loc[self.choices["list_name"] == choice].map(str))
             choice_labels = list(
                 self.choices["name"].loc[self.choices["list_name"] == choice].map(str))
             zipped = list(zip(choice_labels, choice_names))
             zipped = [" = ".join(x) for x in zipped]
-            if len(zipped) > 50:
-                zipped1 = zipped[0:25]
-                zipped2 = zipped[-25:-1]
-                zipped = zipped1+["...The list is longer than 50, some elements are omitted..."]+zipped2
+            if compress_long_choices:
+                if len(zipped) > 50:
+                    zipped1 = zipped[0:25]
+                    zipped2 = zipped[-25:-1]
+                    zipped = zipped1+["...The list is longer than 50, some elements are omitted..."]+zipped2
             zipped = "\n".join(zipped)
             return zipped
 
         def get_from_file(file):
             choice_list = list(self.attachments[file]["label"].map(str))
-            if len(choice_list) > 50:
-                choice_list1 = choice_list[0:25]
-                choice_list2 = choice_list[-25:-1]
-                choice_list = choice_list1 + \
-                    ["...The list is longer than 50, some elements are omitted..."]+choice_list2
+            if compress_long_choices:
+                if len(choice_list) > 50:
+                    choice_list1 = choice_list[0:25]
+                    choice_list2 = choice_list[-25:-1]
+                    choice_list = choice_list1 + \
+                        ["...The list is longer than 50, some elements are omitted..."]+choice_list2
             return "\n".join(choice_list)
 
         def process_enclosing_variables(data):
@@ -168,23 +288,25 @@ class process_questionnaire():
             if not pd.isna(s[column].iloc[index]):
 
                 paragraph = row_cells[cell_index].paragraphs[0]
+                paragraph_format = paragraph.paragraph_format
+                paragraph_format.space_before = Pt(paragraph_spacing_points)
+                paragraph_format.space_after = Pt(paragraph_spacing_points)
                 run = paragraph.add_run(process_enclosing_variables(
                     str(s[column].iloc[index])))
                 if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
                     run.italics = True
                     run.font.size = Pt(8)
-            # else:
-            #     run = paragraph.add_run("")
-            #     if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
-            #         run.italics = True
-            #         run.font.size = Pt(8)
+
 
         def process_string_only_combined(cells, index):
-            columns_names = ["Skip logic: ", "Default value: ", "Constrain value: ",
+            columns_names = ["Relevant: ", "Default value: ", "Constrain value: ",
                              "Calculation: ", "Choice filter: ", "Repeat count: "]
             column_labels = ["relevant", "default", "constraint",
                              "calculation", "choice_filter", "repeat_count"]
             paragraph = cells[5].paragraphs[0]
+            paragraph_format = paragraph.paragraph_format
+            paragraph_format.space_before = Pt(paragraph_spacing_points)
+            paragraph_format.space_after = Pt(paragraph_spacing_points)
             count = 0
             for j in range(len(column_labels)):
                 if not pd.isna(self.survey[column_labels[j]].iloc[index]):
@@ -213,156 +335,18 @@ class process_questionnaire():
         def cell_shading(index=None, index_counter=None, header_row=False):
             if index != None:
                 sss = self.survey["type"].iloc[index].split(" ")[0]
-                if sss == "begin_group":
-                    shading_elm_0 = parse_xml(
-                        r'<w:shd {} w:fill="BDBD51"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[0]._tc.get_or_add_tcPr().append(shading_elm_0)
-                    shading_elm_1 = parse_xml(
-                        r'<w:shd {} w:fill="BDBD51"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[1]._tc.get_or_add_tcPr().append(shading_elm_1)
-                    shading_elm_2 = parse_xml(
-                        r'<w:shd {} w:fill="BDBD51"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[2]._tc.get_or_add_tcPr().append(shading_elm_2)
-                    shading_elm_3 = parse_xml(
-                        r'<w:shd {} w:fill="BDBD51"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[3]._tc.get_or_add_tcPr().append(shading_elm_3)
-                    shading_elm_4 = parse_xml(
-                        r'<w:shd {} w:fill="BDBD51"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[4]._tc.get_or_add_tcPr().append(shading_elm_4)
-                    shading_elm_5 = parse_xml(
-                        r'<w:shd {} w:fill="BDBD51"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[5]._tc.get_or_add_tcPr().append(shading_elm_5)
-                elif sss == "end_group":
-                    shading_elm_0 = parse_xml(
-                        r'<w:shd {} w:fill="E2E2B3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[0]._tc.get_or_add_tcPr().append(shading_elm_0)
-                    shading_elm_1 = parse_xml(
-                        r'<w:shd {} w:fill="E2E2B3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[1]._tc.get_or_add_tcPr().append(shading_elm_1)
-                    shading_elm_2 = parse_xml(
-                        r'<w:shd {} w:fill="E2E2B3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[2]._tc.get_or_add_tcPr().append(shading_elm_2)
-                    shading_elm_3 = parse_xml(
-                        r'<w:shd {} w:fill="E2E2B3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[3]._tc.get_or_add_tcPr().append(shading_elm_3)
-                    shading_elm_4 = parse_xml(
-                        r'<w:shd {} w:fill="E2E2B3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[4]._tc.get_or_add_tcPr().append(shading_elm_4)
-                    shading_elm_5 = parse_xml(
-                        r'<w:shd {} w:fill="E2E2B3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[5]._tc.get_or_add_tcPr().append(shading_elm_5)
-                elif sss == "begin_repeat":
-                    shading_elm_0 = parse_xml(
-                        r'<w:shd {} w:fill="AAECD3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[0]._tc.get_or_add_tcPr().append(shading_elm_0)
-                    shading_elm_1 = parse_xml(
-                        r'<w:shd {} w:fill="AAECD3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[1]._tc.get_or_add_tcPr().append(shading_elm_1)
-                    shading_elm_2 = parse_xml(
-                        r'<w:shd {} w:fill="AAECD3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[2]._tc.get_or_add_tcPr().append(shading_elm_2)
-                    shading_elm_3 = parse_xml(
-                        r'<w:shd {} w:fill="AAECD3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[3]._tc.get_or_add_tcPr().append(shading_elm_3)
-                    shading_elm_4 = parse_xml(
-                        r'<w:shd {} w:fill="AAECD3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[4]._tc.get_or_add_tcPr().append(shading_elm_4)
-                    shading_elm_5 = parse_xml(
-                        r'<w:shd {} w:fill="AAECD3"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[5]._tc.get_or_add_tcPr().append(shading_elm_5)
-                elif sss == "end_repeat":
-                    shading_elm_0 = parse_xml(
-                        r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[0]._tc.get_or_add_tcPr().append(shading_elm_0)
-                    shading_elm_1 = parse_xml(
-                        r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[1]._tc.get_or_add_tcPr().append(shading_elm_1)
-                    shading_elm_2 = parse_xml(
-                        r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[2]._tc.get_or_add_tcPr().append(shading_elm_2)
-                    shading_elm_3 = parse_xml(
-                        r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[3]._tc.get_or_add_tcPr().append(shading_elm_3)
-                    shading_elm_4 = parse_xml(
-                        r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[4]._tc.get_or_add_tcPr().append(shading_elm_4)
-                    shading_elm_5 = parse_xml(
-                        r'<w:shd {} w:fill="C5E8DA"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[5]._tc.get_or_add_tcPr().append(shading_elm_5)
-                elif (sss == "calculate"):
-                    shading_elm_0 = parse_xml(
-                        r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[0]._tc.get_or_add_tcPr().append(shading_elm_0)
-                    shading_elm_1 = parse_xml(
-                        r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[1]._tc.get_or_add_tcPr().append(shading_elm_1)
-                    shading_elm_2 = parse_xml(
-                        r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[2]._tc.get_or_add_tcPr().append(shading_elm_2)
-                    shading_elm_3 = parse_xml(
-                        r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[3]._tc.get_or_add_tcPr().append(shading_elm_3)
-                    shading_elm_4 = parse_xml(
-                        r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[4]._tc.get_or_add_tcPr().append(shading_elm_4)
-                    shading_elm_5 = parse_xml(
-                        r'<w:shd {} w:fill="CECECE"/>'.format(nsdecls('w')))
-                    table.rows[index+1 -
-                               index_counter].cells[5]._tc.get_or_add_tcPr().append(shading_elm_5)
+                if sss in highlight_color.keys():
+                    for j in range(6):
+                        shading_elm = parse_xml(
+                            f'<w:shd {nsdecls('w')} w:fill="{highlight_color[sss]}"/>')
+                        table.rows[index+1 -index_counter].cells[j]._tc.get_or_add_tcPr().append(
+                            shading_elm)
             if header_row:
-                shading_elm_0 = parse_xml(
-                    r'<w:shd {} w:fill="919191"/>'.format(nsdecls('w')))
-                table.rows[0].cells[0]._tc.get_or_add_tcPr().append(
-                    shading_elm_0)
-                shading_elm_1 = parse_xml(
-                    r'<w:shd {} w:fill="919191"/>'.format(nsdecls('w')))
-                table.rows[0].cells[1]._tc.get_or_add_tcPr().append(
-                    shading_elm_1)
-                shading_elm_2 = parse_xml(
-                    r'<w:shd {} w:fill="919191"/>'.format(nsdecls('w')))
-                table.rows[0].cells[2]._tc.get_or_add_tcPr().append(
-                    shading_elm_2)
-                shading_elm_3 = parse_xml(
-                    r'<w:shd {} w:fill="919191"/>'.format(nsdecls('w')))
-                table.rows[0].cells[3]._tc.get_or_add_tcPr().append(
-                    shading_elm_3)
-                shading_elm_4 = parse_xml(
-                    r'<w:shd {} w:fill="919191"/>'.format(nsdecls('w')))
-                table.rows[0].cells[4]._tc.get_or_add_tcPr().append(
-                    shading_elm_4)
-                shading_elm_5 = parse_xml(
-                    r'<w:shd {} w:fill="919191"/>'.format(nsdecls('w')))
-                table.rows[0].cells[5]._tc.get_or_add_tcPr().append(
-                    shading_elm_5)
+                for j in range(6):
+                    shading_elm = parse_xml(
+                        f'<w:shd {nsdecls('w')} w:fill="{highlight_color['header_row']}"/>')
+                    table.rows[0].cells[j]._tc.get_or_add_tcPr().append(
+                        shading_elm)
 
         cell_shading(header_row=True)
         set_repeat_table_header(table.rows[0])
@@ -384,6 +368,9 @@ class process_questionnaire():
                 row_cells = table.add_row().cells
                 cell_shading(index=i, index_counter=index_counter)
                 paragraph = row_cells[0].paragraphs[0]
+                paragraph_format = paragraph.paragraph_format
+                paragraph_format.space_before = Pt(paragraph_spacing_points)
+                paragraph_format.space_after = Pt(paragraph_spacing_points)
                 run = paragraph.add_run(s["name"].iloc[i] if not pd.isna(
                     s["name"].iloc[i]) else "")
                 if self.survey["type"].iloc[i].split(" ")[0] == "calculate":
@@ -391,13 +378,16 @@ class process_questionnaire():
                     run.font.size = Pt(8)
 
                 paragraph = row_cells[1].paragraphs[0]
+                paragraph_format = paragraph.paragraph_format
+                paragraph_format.space_before = Pt(paragraph_spacing_points)
+                paragraph_format.space_after = Pt(paragraph_spacing_points)
                 run = paragraph.add_run(s["type"].iloc[i].split(" ")[0])
                 if self.survey["type"].iloc[i].split(" ")[0] == "calculate":
                     run.italics = True
                     run.font.size = Pt(8)
 
-                process_string_only("label::English (en)", i, 2)
-                process_string_only("hint::English (en)", i, 3)
+                process_string_only(f"label{"" if language == None else "::"+language}", i, 2)
+                process_string_only(f"hint{"" if language == None else "::"+language}", i, 3)
 
                 if (s["type"].iloc[i].split(" ")[0] == "select_one") or (s["type"].iloc[i].split(" ")[0] == "select_multiple"):
                     row_cells[4].text = get_choices(
@@ -409,7 +399,9 @@ class process_questionnaire():
                     row_cells[4].text = ""
                 process_string_only_combined(row_cells, i)
 
-        document.save(f"{self.form_title}-{str(self.form_version)}.docx")
+        document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if language==None else "-" +language.split(" ")[0])}-{str(self.form_version)}.docx")
+
+
 # %% #@ ODK Class
 
 class ODK():
