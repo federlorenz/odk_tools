@@ -60,7 +60,6 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
 
     workbook.close()
 
-
 class process_questionnaire():
     def __init__(self):
         self.attachments = None
@@ -401,7 +400,6 @@ class process_questionnaire():
 
         document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if language==None else "-" +language.split(" ")[0])}-{str(self.form_version)}.docx")
 
-
 # %% #@ ODK Class
 
 class ODK():
@@ -469,6 +467,11 @@ class ODK():
                 if req.json()[i]["name"] == self.form_name][0]
 
         return form
+
+    def published_form_versions(self):
+        req = requests.get(f"{self.url}/v1/projects/{str(self.get_project())}/forms/{self.get_form()}/versions", headers=self.headers)
+        versions = [req.json()[i]["version"] for i in range(len(req.json()))]
+        return versions
 
     def save_form(self, path="", save_file=True, xml=False):
 
