@@ -173,11 +173,11 @@ class process_questionnaire():
                 if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
                     run.italics = True
                     run.font.size = Pt(8)
-            else:
-                run = paragraph.add_run("")
-                if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
-                    run.italics = True
-                    run.font.size = Pt(8)
+            # else:
+            #     run = paragraph.add_run("")
+            #     if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+            #         run.italics = True
+            #         run.font.size = Pt(8)
 
         def process_string_only_combined(cells, index):
             columns_names = ["Skip logic: ", "Default value: ", "Constrain value: ",
