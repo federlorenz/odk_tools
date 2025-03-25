@@ -211,7 +211,8 @@ class process_questionnaire():
                     "A repeated block of questions begins":"9BBB59",
                     "A repeated block fo questions ends":"D6E3BC",
                     "A questions of type \"calculate\"":"D9D9D9",
-                    "The table headers":"919191"}.items():
+                    "The table headers":"919191",
+                    "Cells modified after review": "FFFF00"}.items():
             row_cells = legend.add_row().cells
             paragraph = row_cells[1].paragraphs[0]
             paragraph_format = paragraph.paragraph_format
@@ -230,7 +231,6 @@ class process_questionnaire():
             row.height = dcx.shared.Cm(1)
 
         p = document.add_paragraph()
-        run = p.add_run('\n')
         run = p.add_run('\n')
         run = p.add_run('\n')
         run.italic = True
