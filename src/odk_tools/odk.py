@@ -80,10 +80,10 @@ class process_questionnaire():
 
         survey = pd.read_excel(form_filename, na_values=[
                                ' ', ''], keep_default_na=False, sheet_name="survey").dropna(how='all')
-        self.survey = ODK.strip_double_column(survey)
+        self.survey = process_questionnaire.strip_double_column(survey)
         choices = pd.read_excel(form_filename, sheet_name="choices", na_values=[
                                 ' ', ''], keep_default_na=False).dropna(how='all')
-        self.choices = ODK.strip_double_column(choices)
+        self.choices = process_questionnaire.strip_double_column(choices)
         settings = pd.read_excel(form_filename, sheet_name="settings", na_values=[
             ' ', ''], keep_default_na=False).dropna(how='all')
         self.settings = settings
@@ -95,8 +95,10 @@ class process_questionnaire():
         self.attachments = attachments
 
     def get_data_from_odk_object(self, odk_object):
-        self.survey = ODK.strip_double_column(odk_object.survey)
-        self.choices = ODK.strip_double_column(odk_object.choices)
+        self.survey = process_questionnaire.strip_double_column(
+            odk_object.survey)
+        self.choices = process_questionnaire.strip_double_column(
+            odk_object.choices)
         self.settings = odk_object.settings
         self.form_title = self.settings['form_title'].iloc[0]
         self.form_version = self.settings['version'].iloc[0]
