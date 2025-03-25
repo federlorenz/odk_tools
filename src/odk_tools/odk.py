@@ -70,13 +70,20 @@ class process_questionnaire():
         self.form_version = None
         self.languages = None
 
+
+    @classmethod
+    def strip_double_column(cls,df):
+            df.columns = [i.replace("::",":") for i in df.columns]
+            return df
+    
     def get_data_from_files(self, form_filename, attachements_list_filenames):
+
         survey = pd.read_excel(form_filename, na_values=[
                                ' ', ''], keep_default_na=False, sheet_name="survey").dropna(how='all')
-        self.survey = survey
+        self.survey = ODK.strip_double_column(survey)
         choices = pd.read_excel(form_filename, sheet_name="choices", na_values=[
                                 ' ', ''], keep_default_na=False).dropna(how='all')
-        self.choices = choices
+        self.choices = ODK.strip_double_column(choices)
         settings = pd.read_excel(form_filename, sheet_name="settings", na_values=[
             ' ', ''], keep_default_na=False).dropna(how='all')
         self.settings = settings
@@ -88,19 +95,21 @@ class process_questionnaire():
         self.attachments = attachments
 
     def get_data_from_odk_object(self, odk_object):
-        self.survey = odk_object.survey
-        self.choices = odk_object.choices
+        self.survey = ODK.strip_double_column(odk_object.survey)
+        self.choices = ODK.strip_double_column(odk_object.choices)
         self.settings = odk_object.settings
         self.form_title = self.settings['form_title'].iloc[0]
         self.form_version = self.settings['version'].iloc[0]
         self.attachments = odk_object.attachments
 
+
     def get_languages(self):
         language =[]
         for column in self.survey.columns:
             if column[:5] == "label":
-                language.append(column.split("::")[1])
+                language.append(column.split(":")[1])
         self.languages = list(set(language))
+
 
     def process(self,highlight_color = {"begin_group":"4F81BD","end_group":"B8CCE4","begin_repeat":"9BBB59","end_repeat":"D6E3BC","calculate":"D9D9D9","header_row":"919191"},language=None,paragraph_spacing_points=3,compress_long_choices=True):
 
@@ -248,7 +257,7 @@ class process_questionnaire():
 
         def get_choices(choice):
             choice_names = list(
-                self.choices[f"label{"" if language == None else "::"+language}"].loc[self.choices["list_name"] == choice].map(str))
+                self.choices[f"label{"" if language == None else ":"+language}"].loc[self.choices["list_name"] == choice].map(str))
             choice_labels = list(
                 self.choices["name"].loc[self.choices["list_name"] == choice].map(str))
             zipped = list(zip(choice_labels, choice_names))
@@ -385,8 +394,8 @@ class process_questionnaire():
                     run.italics = True
                     run.font.size = Pt(8)
 
-                process_string_only(f"label{"" if language == None else "::"+language}", i, 2)
-                process_string_only(f"hint{"" if language == None else "::"+language}", i, 3)
+                process_string_only(f"label{"" if language == None else ":"+language}", i, 2)
+                process_string_only(f"hint{"" if language == None else ":"+language}", i, 3)
 
                 if (s["type"].iloc[i].split(" ")[0] == "select_one") or (s["type"].iloc[i].split(" ")[0] == "select_multiple"):
                     row_cells[4].text = get_choices(
