@@ -24,9 +24,12 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 
 # %% #@ Functions
 
-def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True):
+def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True, to_bytes = False):
 
-    workbook = xlsxwriter.Workbook(filename)
+    if to_bytes == True:
+        workbook = xlsxwriter.Workbook(filename,{'in_memory': True})
+    else:
+        workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
 
     for i in range(len(data.columns)):
@@ -60,7 +63,10 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
 
     workbook.close()
 
-class process_questionnaire():
+    if to_bytes==True:
+        return filename
+
+class Process_questionnaire():
     def __init__(self):
         self.attachments = None
         self.survey = None
@@ -80,10 +86,10 @@ class process_questionnaire():
 
         survey = pd.read_excel(form_filename, na_values=[
                                ' ', ''], keep_default_na=False, sheet_name="survey").dropna(how='all')
-        self.survey = process_questionnaire.strip_double_column(survey)
+        self.survey = Process_questionnaire.strip_double_column(survey)
         choices = pd.read_excel(form_filename, sheet_name="choices", na_values=[
                                 ' ', ''], keep_default_na=False).dropna(how='all')
-        self.choices = process_questionnaire.strip_double_column(choices)
+        self.choices = Process_questionnaire.strip_double_column(choices)
         settings = pd.read_excel(form_filename, sheet_name="settings", na_values=[
             ' ', ''], keep_default_na=False).dropna(how='all')
         self.settings = settings
@@ -95,9 +101,9 @@ class process_questionnaire():
         self.attachments = attachments
 
     def get_data_from_odk_object(self, odk_object):
-        self.survey = process_questionnaire.strip_double_column(
+        self.survey = Process_questionnaire.strip_double_column(
             odk_object.survey)
-        self.choices = process_questionnaire.strip_double_column(
+        self.choices = Process_questionnaire.strip_double_column(
             odk_object.choices)
         self.settings = odk_object.settings
         self.form_title = self.settings['form_title'].iloc[0]
@@ -116,8 +122,7 @@ class process_questionnaire():
                     language.append(column.split(":")[1])
         self.languages = sorted(list(set(language)))
 
-
-    def process(self,highlight_color = {"begin_group":"4F81BD","end_group":"B8CCE4","begin_repeat":"9BBB59","end_repeat":"D6E3BC","calculate":"D9D9D9","header_row":"919191"},language=None,paragraph_spacing_points=3,compress_long_choices=True):
+    def process(self, highlight_color= {"begin_group": "4F81BD", "end_group": "B8CCE4", "begin_repeat": "9BBB59", "end_repeat": "D6E3BC", "calculate": "D9D9D9", "header_row": "919191"}, language=None, paragraph_spacing_points=3, compress_long_choices=True, to_memory_filename=False):
 
         document = dcx.Document()
         section = document.sections[-1]
@@ -412,8 +417,10 @@ class process_questionnaire():
                 else:
                     row_cells[4].text = ""
                 process_string_only_combined(row_cells, i)
-
-        document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if (language==None or language ==  "") else "-" +language.split(" ")[0])}-{"Version_"+str(self.form_version)}.docx")
+        if to_memory_filename != False:
+            document.save(to_memory_filename)
+        else:
+            document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if (language==None or language ==  "") else "-" +language.split(" ")[0])}-{"Version_"+str(self.form_version)}.docx")
 
 # %% #@ ODK Class
 
@@ -901,7 +908,7 @@ class ODK():
 
         return Form(submissions, survey, choices, settings, repeats, survey_name, variable, time_variable, media, attachments)
 
-    def save_main(self, data=None, path=""):
+    def save_main(self, data=None, path="", to_memory_filename = False):
 
         df = self.processing_submission() if type(data) == type(None) else data
 
@@ -924,9 +931,12 @@ class ODK():
 
         df_out.sort_index(inplace=True)
 
-        save_to_excel(df_out, path+self.form_name+"_submissions.xlsx")
+        if to_memory_filename != False:
+            save_to_excel(df_out, to_memory_filename, to_bytes=True)
+        else:
+            save_to_excel(df_out, path+self.form_name+"_submissions.xlsx")
 
-    def save_repeat(self, data=None, path=""):
+    def save_repeat(self, data=None, path="", to_memory_filename=False):
 
         repeats = self.processing_repeats() if type(data) == type(None) else data
 
@@ -949,8 +959,10 @@ class ODK():
             rep_out.loc[-1] = a
 
             rep_out.sort_index(inplace=True)
-
-            save_to_excel(rep_out, path+k+".xlsx")
+            if to_memory_filename != False:
+                save_to_excel(rep_out, to_memory_filename[k],to_bytes=True)
+            else:
+                save_to_excel(rep_out, path+k+".xlsx")
 
     def save_data(self, path=""):
 
