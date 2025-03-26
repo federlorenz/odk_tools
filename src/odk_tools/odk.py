@@ -490,6 +490,26 @@ class ODK():
 
         return form
 
+    def form_is_published(self, project_name=None,form_name=None):
+        if project_name==None:
+            project_name=self.project_name
+        if form_name==None:
+            form_name=self.form_name
+
+        req = requests.get(self.url+'/v1/projects', headers=self.headers)
+        projectid = [req.json()[i]["id"] for i in range(len(req.json()))
+                   if req.json()[i]["name"] == project_name][0]
+        req = requests.get(self.url+'/v1/projects/' +
+                                   str(projectid)+"/forms", headers=self.headers)
+        form = [req.json()[i]for i in range(len(req.json()))
+                if req.json()[i]["name"] == form_name][0]
+        if form["publishedAt"]==None:
+            return False
+        else:
+            return True
+    
+        
+
     def published_form_versions(self):
         req = requests.get(f"{self.url}/v1/projects/{str(self.get_project())}/forms/{self.get_form()}/versions", headers=self.headers)
         versions = [req.json()[i]["version"] for i in range(len(req.json()))]
