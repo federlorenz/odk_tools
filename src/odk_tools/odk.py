@@ -101,8 +101,9 @@ class process_questionnaire():
             odk_object.choices)
         self.settings = odk_object.settings
         self.form_title = self.settings['form_title'].iloc[0]
-        self.form_version = self.settings['version'].iloc[0]
+        self.form_version = self.settings['version'].iloc[0] if odk_object.form_is_published() else "FORM_NOT_PUBLISHED"
         self.attachments = odk_object.attachments
+        self.form_is_published = odk_object.form_is_published()
 
 
     def get_languages(self):
