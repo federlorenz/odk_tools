@@ -113,7 +113,7 @@ class process_questionnaire():
                     language.append("")
                 else:
                     language.append(column.split(":")[1])
-        self.languages = list(set(language))
+        self.languages = sorted(list(set(language)))
 
 
     def process(self,highlight_color = {"begin_group":"4F81BD","end_group":"B8CCE4","begin_repeat":"9BBB59","end_repeat":"D6E3BC","calculate":"D9D9D9","header_row":"919191"},language=None,paragraph_spacing_points=3,compress_long_choices=True):
