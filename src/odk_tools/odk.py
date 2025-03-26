@@ -109,7 +109,10 @@ class process_questionnaire():
         language =[]
         for column in self.survey.columns:
             if column[:5] == "label":
-                language.append(column.split(":")[1])
+                if len(column) == 5:
+                    language.append("")
+                else:
+                    language.append(column.split(":")[1])
         self.languages = list(set(language))
 
 
@@ -125,7 +128,7 @@ class process_questionnaire():
         section.bottom_margin = dcx.shared.Cm(0.5)
         section.left_margin = dcx.shared.Cm(1)
         section.right_margin = dcx.shared.Cm(1)
-        heading = document.add_heading(f"Form title = {self.form_title}\nForm version = {str(self.form_version)}{"\n" if language==None else "\nForm language = "+language.split(" ")[0]}\n\n")
+        heading = document.add_heading(f"Form title = {self.form_title}\nForm version = {str(self.form_version)}{"\n" if (language==None or language == "") else "\nForm language = "+language.split(" ")[0]}\n\n")
         heading.alignment = 1
 
         p = document.add_heading('Headings explained', level=2)
@@ -259,7 +262,7 @@ class process_questionnaire():
 
         def get_choices(choice):
             choice_names = list(
-                self.choices[f"label{"" if language == None else ":"+language}"].loc[self.choices["list_name"] == choice].map(str))
+                self.choices[f"label{"" if (language == None or language == "") else ":"+language}"].loc[self.choices["list_name"] == choice].map(str))
             choice_labels = list(
                 self.choices["name"].loc[self.choices["list_name"] == choice].map(str))
             zipped = list(zip(choice_labels, choice_names))
@@ -396,8 +399,8 @@ class process_questionnaire():
                     run.italics = True
                     run.font.size = Pt(8)
 
-                process_string_only(f"label{"" if language == None else ":"+language}", i, 2)
-                process_string_only(f"hint{"" if language == None else ":"+language}", i, 3)
+                process_string_only(f"label{"" if (language == None or language == "") else ":"+language}", i, 2)
+                process_string_only(f"hint{"" if (language == None or language == "") else ":"+language}", i, 3)
 
                 if (s["type"].iloc[i].split(" ")[0] == "select_one") or (s["type"].iloc[i].split(" ")[0] == "select_multiple"):
                     row_cells[4].text = get_choices(
@@ -409,7 +412,7 @@ class process_questionnaire():
                     row_cells[4].text = ""
                 process_string_only_combined(row_cells, i)
 
-        document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if language==None else "-" +language.split(" ")[0])}-{str(self.form_version)}.docx")
+        document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if (language==None or language ==  "") else "-" +language.split(" ")[0])}-{str(self.form_version)}.docx")
 
 # %% #@ ODK Class
 
