@@ -451,10 +451,10 @@ class ODK():
     def list_projects(self, archived=False):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
         if archived == False:
-            projects = [req.json()[i]["name"] for i in range(len(req.json())) if req.json()[i]["archived"]==False]
+            projects = [req.json()[i]["name"] for i in range(len(req.json())) if req.json()[i]["archived"]!=True]
         else:
             projects = [req.json()[i]["name"] for i in range(
-                len(req.json())) if req.json()[i]["archived"] != False]
+                len(req.json())) if req.json()[i]["archived"] == True]
         return projects
 
     def get_project(self):
