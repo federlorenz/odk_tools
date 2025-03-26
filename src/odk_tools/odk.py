@@ -443,10 +443,14 @@ class ODK():
         self.form_name = form_name
         self.project = self.get_project()
         self.form = self.get_form()
-        self.survey = self.get_survey()
-        self.choiches = self.get_choices()
-        self.settings = self.get_settings()
-        self.attachments = self.get_attachments()
+        if len(self.published_form_versions()[0])==0:
+            draft = True
+        else:
+            draft = False
+        self.survey = self.get_survey(draft=draft)
+        self.choiches = self.get_choices(draft=draft)
+        self.settings = self.get_settings(draft=draft)
+        self.attachments = self.get_attachments(draft=draft)
 
     def list_projects(self, archived=False):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
