@@ -10,7 +10,6 @@ import zipfile as zp
 import xlsxwriter
 import xml.etree.ElementTree as ET
 import uuid
-from types import FunctionType
 from .classes import Form
 import docx as dcx
 from docx.oxml.ns import nsdecls
@@ -24,10 +23,11 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 
 # %% #@ Functions
 
-def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True, to_bytes = False):
+
+def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True, to_bytes=False):
 
     if to_bytes == True:
-        workbook = xlsxwriter.Workbook(filename,{'in_memory': True})
+        workbook = xlsxwriter.Workbook(filename, {'in_memory': True})
     else:
         workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
@@ -63,8 +63,9 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
 
     workbook.close()
 
-    if to_bytes==True:
+    if to_bytes == True:
         return filename
+
 
 class Process_questionnaire():
     def __init__(self):
@@ -76,12 +77,11 @@ class Process_questionnaire():
         self.form_version = None
         self.languages = None
 
-
     @classmethod
-    def strip_double_column(cls,df):
-            df.columns = [i.replace("::",":") for i in df.columns]
-            return df
-    
+    def strip_double_column(cls, df):
+        df.columns = [i.replace("::", ":") for i in df.columns]
+        return df
+
     def get_data_from_files(self, form_filename, attachements_list_filenames):
 
         survey = pd.read_excel(form_filename, na_values=[
@@ -107,13 +107,13 @@ class Process_questionnaire():
             odk_object.choices)
         self.settings = odk_object.settings
         self.form_title = self.settings['form_title'].iloc[0]
-        self.form_version = self.settings['version'].iloc[0] if odk_object.form_is_published() else "FORM_NOT_PUBLISHED"
+        self.form_version = self.settings['version'].iloc[0] if odk_object.form_is_published(
+        ) else "FORM_NOT_PUBLISHED"
         self.attachments = odk_object.attachments
         self.form_is_published = odk_object.form_is_published()
 
-
     def get_languages(self):
-        language =[]
+        language = []
         for column in self.survey.columns:
             if column[:5] == "label":
                 if len(column) == 5:
@@ -122,7 +122,7 @@ class Process_questionnaire():
                     language.append(column.split(":")[1])
         self.languages = sorted(list(set(language)))
 
-    def process(self, highlight_color= {"begin_group": "4F81BD", "end_group": "B8CCE4", "begin_repeat": "9BBB59", "end_repeat": "D6E3BC", "calculate": "D9D9D9", "header_row": "919191"}, language=None, paragraph_spacing_points=3, compress_long_choices=True, to_memory_filename=False):
+    def process(self, highlight_color={"begin_group": "4F81BD", "end_group": "B8CCE4", "begin_repeat": "9BBB59", "end_repeat": "D6E3BC", "calculate": "D9D9D9", "header_row": "919191"}, language=None, paragraph_spacing_points=3, compress_long_choices=True, to_memory_filename=False):
 
         document = dcx.Document()
         section = document.sections[-1]
@@ -134,7 +134,8 @@ class Process_questionnaire():
         section.bottom_margin = dcx.shared.Cm(0.5)
         section.left_margin = dcx.shared.Cm(1)
         section.right_margin = dcx.shared.Cm(1)
-        heading = document.add_heading(f"Form title = {self.form_title}\nForm version = {str(self.form_version)}{"\n" if (language==None or language == "") else "\nForm language = "+language.split(" ")[0]}\n\n")
+        heading = document.add_heading(
+            f"Form title = {self.form_title}\nForm version = {str(self.form_version)}{"\n" if (language == None or language == "") else "\nForm language = "+language.split(" ")[0]}\n\n")
         heading.alignment = 1
 
         p = document.add_heading('Headings explained', level=2)
@@ -156,28 +157,32 @@ class Process_questionnaire():
 
         run = p.add_run('Question')
         run.bold = True
-        run = p.add_run(': The question label in the specified language (default language English)')
+        run = p.add_run(
+            ': The question label in the specified language (default language English)')
         run.italic = True
         run = p.add_run('\n')
         run.italic = True
 
         run = p.add_run('Hint')
         run.bold = True
-        run = p.add_run(': The hint in the specified language (default language English)')
+        run = p.add_run(
+            ': The hint in the specified language (default language English)')
         run.italic = True
         run = p.add_run('\n')
         run.italic = True
 
         run = p.add_run('Select options')
         run.bold = True
-        run = p.add_run(': For questions of type select_one or select_multiple, these are the options that can be selected.')
+        run = p.add_run(
+            ': For questions of type select_one or select_multiple, these are the options that can be selected.')
         run.italic = True
         run = p.add_run('\n')
         run.italic = True
 
         run = p.add_run('Logic')
         run.bold = True
-        run = p.add_run(': These are the logics defined for the question. Different logic can be defined. ')
+        run = p.add_run(
+            ': These are the logics defined for the question. Different logic can be defined. ')
         run.italic = True
         run = p.add_run('Relevant')
         run.font.color.rgb = RGBColor(50, 0, 255)
@@ -192,22 +197,26 @@ class Process_questionnaire():
         run = p.add_run('Constrain value')
         run.font.color.rgb = RGBColor(50, 0, 255)
         run.italic = True
-        run = p.add_run(' specifies the limits imposed on the values that can be typed in. ')
+        run = p.add_run(
+            ' specifies the limits imposed on the values that can be typed in. ')
         run.italic = True
         run = p.add_run('Calculation')
         run.font.color.rgb = RGBColor(50, 0, 255)
         run.italic = True
-        run = p.add_run(' specifies the calculations for questions of type calculate. ')
+        run = p.add_run(
+            ' specifies the calculations for questions of type calculate. ')
         run.italic = True
         run = p.add_run('Choice filter')
         run.font.color.rgb = RGBColor(50, 0, 255)
         run.italic = True
-        run = p.add_run(' specifies if the selectable options for questions of type select_one or select_multiple should be shown according to some logic. ')
+        run = p.add_run(
+            ' specifies if the selectable options for questions of type select_one or select_multiple should be shown according to some logic. ')
         run.italic = True
         run = p.add_run('Repeat count')
         run.font.color.rgb = RGBColor(50, 0, 255)
         run.italic = True
-        run = p.add_run(' specifies the number of times that a repeat block is repeated. ')
+        run = p.add_run(
+            ' specifies the number of times that a repeat block is repeated. ')
         run.italic = True
         run = p.add_run('\n')
         run.italic = True
@@ -215,13 +224,13 @@ class Process_questionnaire():
         p = document.add_heading('Rows highlighting explained', level=2)
 
         legend = document.add_table(rows=0, cols=2)
-        for k,v in {"A block of questions begins":"4F81BD",
-                    "A block of questions ends":"B8CCE4",
-                    "A repeated block of questions begins":"9BBB59",
-                    "A repeated block fo questions ends":"D6E3BC",
-                    "A questions of type \"calculate\"":"D9D9D9",
-                    "The table headers":"919191",
-                    "Cells modified after review": "FFFF00"}.items():
+        for k, v in {"A block of questions begins": "4F81BD",
+                     "A block of questions ends": "B8CCE4",
+                     "A repeated block of questions begins": "9BBB59",
+                     "A repeated block fo questions ends": "D6E3BC",
+                     "A questions of type \"calculate\"": "D9D9D9",
+                     "The table headers": "919191",
+                     "Cells modified after review": "FFFF00"}.items():
             row_cells = legend.add_row().cells
             paragraph = row_cells[1].paragraphs[0]
             paragraph_format = paragraph.paragraph_format
@@ -244,7 +253,6 @@ class Process_questionnaire():
         run = p.add_run('\n')
         run.italic = True
 
-
         table = document.add_table(rows=1, cols=6)
         table.style = "Table Grid"
         title_cells = table.rows[0].cells
@@ -254,7 +262,6 @@ class Process_questionnaire():
             paragraph = title_cells[i].paragraphs[0]
             run = paragraph.add_run(headings[i])
             run.bold = True
-
 
         def set_repeat_table_header(row):
             """ set repeat table row on every new page
@@ -277,7 +284,8 @@ class Process_questionnaire():
                 if len(zipped) > 50:
                     zipped1 = zipped[0:25]
                     zipped2 = zipped[-25:-1]
-                    zipped = zipped1+["...The list is longer than 50, some elements are omitted..."]+zipped2
+                    zipped = zipped1 + \
+                        ["...The list is longer than 50, some elements are omitted..."]+zipped2
             zipped = "\n".join(zipped)
             return zipped
 
@@ -315,7 +323,6 @@ class Process_questionnaire():
                 if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
                     run.italics = True
                     run.font.size = Pt(8)
-
 
         def process_string_only_combined(cells, index):
             columns_names = ["Relevant: ", "Default value: ", "Constrain value: ",
@@ -358,7 +365,7 @@ class Process_questionnaire():
                     for j in range(6):
                         shading_elm = parse_xml(
                             f'<w:shd {nsdecls('w')} w:fill="{highlight_color[sss]}"/>')
-                        table.rows[index+1 -index_counter].cells[j]._tc.get_or_add_tcPr().append(
+                        table.rows[index+1 - index_counter].cells[j]._tc.get_or_add_tcPr().append(
                             shading_elm)
             if header_row:
                 for j in range(6):
@@ -405,8 +412,10 @@ class Process_questionnaire():
                     run.italics = True
                     run.font.size = Pt(8)
 
-                process_string_only(f"label{"" if (language == None or language == "") else ":"+language}", i, 2)
-                process_string_only(f"hint{"" if (language == None or language == "") else ":"+language}", i, 3)
+                process_string_only(
+                    f"label{"" if (language == None or language == "") else ":"+language}", i, 2)
+                process_string_only(
+                    f"hint{"" if (language == None or language == "") else ":"+language}", i, 3)
 
                 if (s["type"].iloc[i].split(" ")[0] == "select_one") or (s["type"].iloc[i].split(" ")[0] == "select_multiple"):
                     row_cells[4].text = get_choices(
@@ -418,11 +427,15 @@ class Process_questionnaire():
                     row_cells[4].text = ""
                 process_string_only_combined(row_cells, i)
         if to_memory_filename != False:
-            document.save(to_memory_filename)
+            out = copy.deepcopy(to_memory_filename)
+            document.save(out)
+            return out
         else:
-            document.save(f"{self.form_title}{"" if (self.languages==None) else ("" if (language==None or language ==  "") else "-" +language.split(" ")[0])}-{"Version_"+str(self.form_version)}.docx")
+            document.save(
+                f"{self.form_title}{"" if (self.languages == None) else ("" if (language == None or language == "") else "-" + language.split(" ")[0])}-{"Version_"+str(self.form_version)}.docx")
 
 # %% #@ ODK Class
+
 
 class ODK():
 
@@ -451,7 +464,7 @@ class ODK():
         self.form_name = form_name
         self.project = self.get_project()
         self.form = self.get_form()
-        if len(self.published_form_versions()[0])==0:
+        if len(self.published_form_versions()[0]) == 0:
             draft = True
         else:
             draft = False
@@ -463,7 +476,8 @@ class ODK():
     def list_projects(self, archived=False):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
         if archived == False:
-            projects = [req.json()[i]["name"] for i in range(len(req.json())) if req.json()[i]["archived"]!=True]
+            projects = [req.json()[i]["name"] for i in range(
+                len(req.json())) if req.json()[i]["archived"] != True]
         else:
             projects = [req.json()[i]["name"] for i in range(
                 len(req.json())) if req.json()[i]["archived"] == True]
@@ -498,32 +512,31 @@ class ODK():
 
         return form
 
-    def form_is_published(self, project_name=None,form_name=None):
-        if project_name==None:
-            project_name=self.project_name
-        if form_name==None:
-            form_name=self.form_name
+    def form_is_published(self, project_name=None, form_name=None):
+        if project_name == None:
+            project_name = self.project_name
+        if form_name == None:
+            form_name = self.form_name
 
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
         projectid = [req.json()[i]["id"] for i in range(len(req.json()))
-                   if req.json()[i]["name"] == project_name][0]
+                     if req.json()[i]["name"] == project_name][0]
         req = requests.get(self.url+'/v1/projects/' +
-                                   str(projectid)+"/forms", headers=self.headers)
+                           str(projectid)+"/forms", headers=self.headers)
         form = [req.json()[i]for i in range(len(req.json()))
                 if req.json()[i]["name"] == form_name][0]
-        if form["publishedAt"]==None:
+        if form["publishedAt"] == None:
             return False
         else:
             return True
-    
-        
 
     def published_form_versions(self):
-        req = requests.get(f"{self.url}/v1/projects/{str(self.get_project())}/forms/{self.get_form()}/versions", headers=self.headers)
+        req = requests.get(
+            f"{self.url}/v1/projects/{str(self.get_project())}/forms/{self.get_form()}/versions", headers=self.headers)
         versions = [req.json()[i]["version"] for i in range(len(req.json()))]
         created_at = [req.json()[i]["publishedAt"]
                       for i in range(len(req.json()))]
-        return versions,created_at
+        return versions, created_at
 
     def set_form_version(self, version=None):
         if version == None:
@@ -543,7 +556,8 @@ class ODK():
         else:
             extension = '.xlsx'
 
-        req = requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}{extension}", headers=self.headers).content
+        req = requests.get(
+            f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}{extension}", headers=self.headers).content
 
         if save_file:
             file = open(path+"form_v"+version+extension, "wb")
@@ -565,19 +579,20 @@ class ODK():
         if version == None:
             if draft == False:
                 version = self.published_form_versions()[0][0]
-        
-        if draft==False:
-            req = requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}.xlsx", headers=self.headers)
+
+        if draft == False:
+            req = requests.get(
+                f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}.xlsx", headers=self.headers)
         else:
             req = requests.get(
                 f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft.xlsx", headers=self.headers)
-        
+
         survey = pd.read_excel(BytesIO(req.content), na_values=[
-                                    ' ', ''], keep_default_na=False).dropna(how='all')
+            ' ', ''], keep_default_na=False).dropna(how='all')
         self.survey = survey
         return survey
 
-    def get_choices(self, version=None,draft=False):
+    def get_choices(self, version=None, draft=False):
 
         if version == None:
             if draft == False:
@@ -594,7 +609,7 @@ class ODK():
         self.choices = choices
         return choices
 
-    def get_settings(self, version=None,draft=False):
+    def get_settings(self, version=None, draft=False):
 
         if version == None:
             if draft == False:
@@ -606,7 +621,7 @@ class ODK():
         else:
             req = requests.get(
                 f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft.xlsx", headers=self.headers)
-    
+
         settings = pd.read_excel(BytesIO(req.content), sheet_name="settings", na_values=[
                                  ' ', ''], keep_default_na=False).dropna(how='all')
         self.settings = settings
@@ -631,7 +646,7 @@ class ODK():
 
         return repeats
 
-    def get_attachments(self,version=None,draft=False):
+    def get_attachments(self, version=None, draft=False):
 
         if version == None:
             if draft == False:
@@ -648,9 +663,11 @@ class ODK():
 
         for j in req.json():
             if draft == False:
-                attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments{j["name"]}", headers=self.headers)).content)
+                attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(
+                    ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments{j["name"]}", headers=self.headers)).content)
             else:
-                attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments{j["name"]}", headers=self.headers)).content)
+                attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(
+                    ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments{j["name"]}", headers=self.headers)).content)
         return attachments
 
     def get_media(self):
@@ -908,7 +925,7 @@ class ODK():
 
         return Form(submissions, survey, choices, settings, repeats, survey_name, variable, time_variable, media, attachments)
 
-    def save_main(self, data=None, path="", to_memory_filename = False):
+    def save_main(self, data=None, path="", to_memory_filename=False):
 
         df = self.processing_submission() if type(data) == type(None) else data
 
@@ -932,13 +949,15 @@ class ODK():
         df_out.sort_index(inplace=True)
 
         if to_memory_filename != False:
-            save_to_excel(df_out, to_memory_filename, to_bytes=True)
+            return save_to_excel(df_out, to_memory_filename, to_bytes=True)
         else:
             save_to_excel(df_out, path+self.form_name+"_submissions.xlsx")
 
     def save_repeat(self, data=None, path="", to_memory_filename=False):
 
         repeats = self.processing_repeats() if type(data) == type(None) else data
+
+        out = copy.deepcopy(to_memory_filename)
 
         for k in repeats.keys():
 
@@ -959,10 +978,13 @@ class ODK():
             rep_out.loc[-1] = a
 
             rep_out.sort_index(inplace=True)
-            if to_memory_filename != False:
-                save_to_excel(rep_out, to_memory_filename[k],to_bytes=True)
+            if out != False:
+                out[k] = save_to_excel(rep_out, BytesIO(), to_bytes=True)
             else:
                 save_to_excel(rep_out, path+k+".xlsx")
+
+        if to_memory_filename != False:
+            return out
 
     def save_data(self, path=""):
 
