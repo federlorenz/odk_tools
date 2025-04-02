@@ -3,55 +3,75 @@ from .classes import Form
 import pandas as pd
 from typing import Dict
 import copy
+from numpy import nan
 
 #%% #@ Functions
 
-def form_merge(form:Form) -> pd.DataFrame:
+def repeat_structure(survey):
+    structure = {}
+    for k in range(len(survey)):
+        if survey['type'].iloc[k] == "begin_repeat":
+            structure[survey['name'].iloc[k]] = None
+    levels = [None]
+    for k in range(len(survey)):
+        if survey['type'].iloc[k] == "begin_repeat":
+            structure[survey['name'].iloc[k]] = levels[-1]
+            levels.append(survey['name'].iloc[k])
+        elif survey['type'].iloc[k] == "end_repeat":
+            levels = levels[:-1]
+    return structure
 
+
+def form_merge(odk_object,form: Form, language="English (en)") -> pd.DataFrame:
+
+    form = form
     subs = form.submissions
     reps = form.repeats
-    if type(subs.columns) == pd.core.indexes.base.Index:
-        if len(reps) == 0:
-            subs = subs.set_index('KEY', drop=False)
-            return subs
+    rstruct = repeat_structure(form.survey)
+    survey = form.survey
+    out = subs
+    for k, v in reps.items():
+        out = pd.merge(left=out.set_index(f"{'' if rstruct[k[len(odk_object.form)+1:]] == None else rstruct[k[len(odk_object.form)+1:]]+'-'}KEY", drop=False), right=v.rename(
+            columns={"KEY": f"{k[len(odk_object.form)+1:]}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
+        drops = []
+        for j in range(len(out.columns)):
+            a = out.columns[j]
+            for i in range(len(out.columns)):
+                b = out.columns[i]
+                if (a[:-2] == b[:-2]) & (a[-2:] == '_x') & (b[-2:] == '_y'):
+                    out[a] = out[b]
+                    out.rename(columns={a: a[:-2]}, inplace=True)
+                    drops.append(b)
+        out.drop(columns=drops, inplace=True)
+        out.set_index("KEY", drop=False, inplace=True)
+
+    rep_key_columns = [i for i in out.columns if (
+        (i.split("-")[-1] == "KEY") and (i[:-4] in list(rstruct.keys())))]
+    new_columns = list(out.columns)
+    for i in rep_key_columns:
+        old_location = new_columns.index(i)
+        new_location = new_columns.index(i[:-4]+"_count")
+        new_columns.insert(new_location, i)
+        new_columns.pop(old_location+1)
+    out = out[new_columns]
+
+    out.reset_index(inplace=True, drop=True)
+
+    a = []
+    for j in out.columns:
+        if j in list(survey["name"]):
+            x = survey[f"label::{language}"].loc[survey["name"]
+                                                 == j].iloc[0]
+            a.append(x)
+        elif j in [i+"-KEY" for i in list(rstruct.keys())]:
+            a.append(f"Unique KEYs for submissions to repeat section {j[:-4]}")
         else:
-            subs = subs.set_index('KEY', drop=False)
-            out = subs.join(other=[value.set_index('PARENT_KEY').rename(columns={
-                            'KEY': 'KEY'+key.split('-')[-1]}) for key, value in reps.items() if len(value)>0], how='outer', validate='one_to_many')
-            drops = []
-            for j in range(len(out.columns)):
-                a = out.columns[j]
-                for i in range(len(out.columns)):
-                    b = out.columns[i]
-                    if (a[:-2] == b[:-2]) & (a[-2:] == '_x') & (b[-2:] == '_y'):
-                        out[a] = out[b]
-                        out.rename(columns={a: a[:-2]}, inplace=True)
-                        drops.append(b)
-            out.drop(columns=drops, inplace=True)
-            return out
-    else:
-        if len(reps) == 0:
-            subs = subs.set_index('KEY', drop=False)
-            return subs
-        else:
-            subs = subs.set_index('KEY', drop=False)
-            out = subs
-            for key,value in reps.items():
-                if len(value)>0:
-                    middle = out.join(value.set_index('PARENT_KEY').rename(columns={
-                        'KEY': 'KEY'+key.split('-')[-1]}, level='code'), how='outer', lsuffix='_x', rsuffix='_y')
-                    out = middle
-            drops = []
-            for j in range(len(out.columns.get_level_values('code'))):
-                a = out.columns.get_level_values('code')[j]
-                for i in range(len(out.columns.get_level_values('code'))):
-                    b = out.columns.get_level_values('code')[i]
-                    if (a[:-2] == b[:-2]) & (a[-2:] == '_x') & (b[-2:] == '_y'):
-                        out[a] = out[b]
-                        out.rename(columns={a: a[:-2]}, inplace=True,level='code')
-                        drops.append(b)
-            out.drop(columns=drops, inplace=True,level='code')
-            return out
+            a.append(nan)
+    df_out = copy.deepcopy(out)
+    df_out.loc[-1] = a
+    df_out.sort_index(inplace=True)
+
+    return df_out
 
 def multi_merge(forms = Dict[Form,str])->pd.DataFrame:
     to_be_merged = []

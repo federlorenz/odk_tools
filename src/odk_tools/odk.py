@@ -686,6 +686,22 @@ class ODK():
                 media[name.split('/')[-1]] = zipfile.read(name)
         return media
 
+    def get_group_repeat_names(self):
+        out = []
+        for j in range(len(self.survey)):
+            if self.survey['type'].iloc[j] in ['begin_group', 'begin_repeat']:
+                out.append(self.survey["name"].iloc[j])
+        return out
+
+    @classmethod
+    def removing_group_repeat_names(cls, column_names, group_repeat_names):
+        for j in group_repeat_names:
+            for k in range(len(column_names)):
+                s = column_names[k]
+                if s.startswith(j+"-") and len(s) > len(j+"-"):
+                    column_names[k] = column_names[k][len(j+"-"):]
+        return column_names
+
     def processing_submission(self, process_datetimes=False):
 
         df = self.get_submissions()
@@ -737,24 +753,8 @@ class ODK():
         func = {"select_one_from_file": select_one_from_file,
                 "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
 
-        group_names = list(
-            self.survey["name"].loc[self.survey["type"] == "begin_group"])
-        group_names = sorted(group_names, key=len, reverse=True)
-
-        column_names = sorted(list(set(self.survey["name"].loc[((self.survey["type"] != "begin_group") & (self.survey["type"] != "end_group") & (
-            self.survey["type"] != "begin_repeat") & (self.survey["type"] != "end_repeat"))]).difference(set([np.nan, ""]))), key=len, reverse=True)
-
-        df_columns = sorted(list(df.columns), key=len, reverse=True)
-
-        for i in df_columns:
-            for j in column_names:
-                if i.endswith(j):
-                    df = df.rename(columns={i: j})
-
-        for i in df_columns:
-            for j in group_names:
-                if i.startswith(j):
-                    df = df.rename(columns={i: i[len(j):]})
+        df.columns = self.removing_group_repeat_names(
+            list(df.columns), self.get_group_repeat_names())
 
         for i in df.columns:
             # try:
@@ -777,10 +777,10 @@ class ODK():
         df = df.loc[df["ReviewState"] != "rejected"]
 
         if process_datetimes:
-            df["SubmissionDate"] = pd.to_datetime(
-                df["SubmissionDate"], format="%Y-%m-%dT%H:%M:%S.%fZ")
-            df["start"] = pd.to_datetime(
-                df["start"], format="%Y-%m-%dT%H:%M:%S.%f%z")
+            if "SubmissionDate" in df.columns:
+                df["SubmissionDate"] = pd.to_datetime(df["SubmissionDate"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+            if 'start' in df.columns:
+                df["start"] = pd.to_datetime(df["start"], format="%Y-%m-%dT%H:%M:%S.%f%z")
 
             for j in self.survey["name"].loc[self.survey["type"] == "datetime"]:
                 try:
@@ -846,14 +846,12 @@ class ODK():
         func = {"select_one_from_file": select_one_from_file,
                 "select_one": select_one, "select_multiple": select_multiple}
 
-        group_names = list(
-            self.survey["name"].loc[self.survey["type"] == "begin_group"])
-        group_names = sorted(group_names, key=len, reverse=True)
-
-        column_names = sorted(list(set(self.survey["name"].loc[((self.survey["type"] != "begin_group") & (self.survey["type"] != "end_group") & (
-            self.survey["type"] != "begin_repeat") & (self.survey["type"] != "end_repeat"))]).difference(set([np.nan]))), key=len, reverse=True)
+        group_names = self.get_group_repeat_names()
 
         for k in repeats.keys():
+            repeats[k].columns = self.removing_group_repeat_names(
+                list(repeats[k].columns), group_names)
+
             for i in repeats[k].columns:
                 # try:
                 a = i
