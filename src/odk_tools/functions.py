@@ -48,8 +48,8 @@ def form_merge(form: Form, language="English (en)") -> pd.DataFrame:
     new_columns = list(out.columns)
     for i in rep_key_columns:
         old_location = new_columns.index(i)
-        new_columns.insert(0, i)
-        new_columns.pop(old_location+1)
+        new_columns.insert(-1, i)
+        new_columns.pop(old_location)
     out = out[new_columns]
 
     out.reset_index(inplace=True, drop=True)
