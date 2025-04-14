@@ -10,11 +10,11 @@ from numpy import nan
 def repeat_structure(survey):
     structure = {}
     for k in range(len(survey)):
-        if survey['type'].iloc[k] == "begin_repeat":
+        if survey['type'].iloc[k] in ["begin_repeat","begin repeat"]:
             structure[survey['name'].iloc[k]] = None
     levels = [None]
     for k in range(len(survey)):
-        if survey['type'].iloc[k] == "begin_repeat":
+        if survey['type'].iloc[k] in ["begin_repeat", "begin repeat"]:
             structure[survey['name'].iloc[k]] = levels[-1]
             levels.append(survey['name'].iloc[k])
         elif survey['type'].iloc[k] == "end_repeat":
@@ -22,8 +22,7 @@ def repeat_structure(survey):
     return structure
 
 
-def form_merge(odk_object,form: Form, language="English (en)") -> pd.DataFrame:
-
+def form_merge(form: Form, language="English (en)") -> pd.DataFrame:
     form = form
     subs = form.submissions
     reps = form.repeats
@@ -31,8 +30,8 @@ def form_merge(odk_object,form: Form, language="English (en)") -> pd.DataFrame:
     survey = form.survey
     out = subs
     for k, v in reps.items():
-        out = pd.merge(left=out.set_index(f"{'' if rstruct[k[len(odk_object.form)+1:]] == None else rstruct[k[len(odk_object.form)+1:]]+'-'}KEY", drop=False), right=v.rename(
-            columns={"KEY": f"{k[len(odk_object.form)+1:]}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
+        out = pd.merge(left=out.set_index(f"{'' if rstruct[k[len(form.form)+1:]] == None else rstruct[k[len(form.form)+1:]]+'-'}KEY", drop=False), right=v.rename(
+            columns={"KEY": f"{k[len(form.form)+1:]}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
         drops = []
         for j in range(len(out.columns)):
             a = out.columns[j]

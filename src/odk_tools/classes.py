@@ -17,6 +17,7 @@ class Form():
     variable
     time_variable
     survey_name
+    form
     choices
     survey
     settings
@@ -24,12 +25,13 @@ class Form():
     attachments
     """
 
-    def __init__(self, submissions, survey, choices, settings, repeats, survey_name, variable, time_variable, media, attachments) -> None:
+    def __init__(self, submissions, survey, choices, settings, repeats, survey_name, form, variable, time_variable, media, attachments) -> None:
         self.submissions = submissions
         self.repeats = repeats
         self.variable = variable
         self.time_variable = time_variable
         self.survey_name = survey_name
+        self.form = form
         self.survey = survey
         self.choices = choices
         self.settings = settings
@@ -73,7 +75,7 @@ class Form():
         media = copy.copy(self.media)
         media = {key: value for key, value in media.items(
         ) if key in self.get_media(submissions, reps)}
-        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, form=self.form, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
 
     def date_time_filter(
             self,
@@ -115,7 +117,7 @@ class Form():
         media = {key: value for key, value in media.items(
         ) if key in self.get_media(submissions, reps)}
 
-        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
+        return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, form=self.form, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
 
     def pdf_summary(self, directory=''):
 
@@ -404,4 +406,4 @@ class Form():
                     [reps[k].columns, reps[k].iloc[0], reps[k].iloc[1]], names=['code', 'variable', 'question'])
                 reps[k] = reps[k].set_axis(new_labels, axis=1).iloc[2:]
 
-        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, settings=self.settings, media=self.media, attachments=self.attachments)
+        return Form(submissions=df_out, repeats=reps, survey=survey, survey_name=self.survey_name, form=self.form, variable=self.variable, time_variable=self.time_variable,  choices=self.choices, settings=self.settings, media=self.media, attachments=self.attachments)

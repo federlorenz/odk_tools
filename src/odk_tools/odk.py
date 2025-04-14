@@ -916,12 +916,13 @@ class ODK():
         settings = self.settings
         repeats = self.processing_repeats(process_datetimes=process_datetimes)
         survey_name = self.form_name
+        form = self.form
         variable = variable
         time_variable = time_variable
         media = self.get_media()
         attachments = self.attachments
 
-        return Form(submissions, survey, choices, settings, repeats, survey_name, variable, time_variable, media, attachments)
+        return Form(submissions, survey, choices, settings, repeats, survey_name, form, variable, time_variable, media, attachments)
 
     def save_main(self, data=None, path="", to_memory_filename=False):
 
