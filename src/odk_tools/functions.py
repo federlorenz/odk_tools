@@ -21,7 +21,6 @@ def repeat_structure(survey):
             levels = levels[:-1]
     return structure
 
-
 def form_merge(form: Form, language="English (en)") -> pd.DataFrame:
     form = form
     subs = form.submissions
@@ -49,8 +48,7 @@ def form_merge(form: Form, language="English (en)") -> pd.DataFrame:
     new_columns = list(out.columns)
     for i in rep_key_columns:
         old_location = new_columns.index(i)
-        new_location = new_columns.index(i[:-4]+"_count")
-        new_columns.insert(new_location, i)
+        new_columns.insert(0, i)
         new_columns.pop(old_location+1)
     out = out[new_columns]
 
