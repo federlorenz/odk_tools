@@ -30,6 +30,9 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
         workbook = xlsxwriter.Workbook(filename, {'in_memory': True})
     else:
         workbook = xlsxwriter.Workbook(filename)
+
+    workbook.use_zip64()
+    
     worksheet = workbook.add_worksheet()
 
     for i in range(len(data.columns)):
