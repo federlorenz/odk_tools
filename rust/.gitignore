@@ -1,3 +1,3 @@
 .DS_Store
 cargo.toml
-/odk_tools
+/odk_tools/src
