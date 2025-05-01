@@ -1,2 +1,7 @@
 .DS_Store
+<<<<<<< HEAD
 /odk_tools/
+=======
+cargo.toml
+/odk_tools/src/
+>>>>>>> f530810c25c08987bf79df806a06a68d73505966
