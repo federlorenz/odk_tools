@@ -80,6 +80,7 @@ class Process_questionnaire():
         self.form_version = None
         self.languages = None
 
+
     @classmethod
     def strip_double_column(cls, df):
         df.columns = [i.replace("::", ":") for i in df.columns]
@@ -114,6 +115,7 @@ class Process_questionnaire():
         ) else "FORM_NOT_PUBLISHED"
         self.attachments = odk_object.attachments
         self.form_is_published = odk_object.form_is_published()
+
 
     def get_languages(self):
         language = []
@@ -450,6 +452,7 @@ class ODK():
         self.choices = None
         self.settings = None
         self.attachments = None
+        self.version = None
 
     def connect(self, email, password):
 
@@ -548,6 +551,7 @@ class ODK():
         self.choiches = self.get_choices(version)
         self.settings = self.get_settings(version)
         self.attachments = self.get_attachments(version)
+        self.version = version
 
     def save_form(self, path="", save_file=True, xml=False, version=None):
 
@@ -693,7 +697,7 @@ class ODK():
         out = []
         for j in range(len(self.survey)):
             if self.survey['type'].iloc[j] in ['begin_group', 'begin_repeat']:
-                out.append(self.survey["name"].iloc[j])
+                out.append(self.survey["name"].iloc[j].strip())
         return out
 
     @classmethod
