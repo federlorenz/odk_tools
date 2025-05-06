@@ -441,7 +441,6 @@ class Process_questionnaire():
 
 # %% #@ ODK Class
 
-
 class ODK():
 
     def __init__(self, url):
