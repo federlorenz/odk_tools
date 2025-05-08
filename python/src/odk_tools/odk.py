@@ -712,6 +712,11 @@ class ODK():
 
         df = self.get_submissions()
 
+        choices_dict = {}
+        for key in set(self.choices['list_name'].map(lambda x: x.strip())):
+            choices_dict[key] = dict(zip(self.choices["name"].loc[self.choices['list_name'].map(lambda x: x.strip()) == key].map(
+                str), self.choices["label::English (en)"].loc[self.choices['list_name'].map(lambda x: x.strip()) == key]))
+
         def remove_tail(list_in):
             a = []
             for j in list_in:
@@ -722,39 +727,28 @@ class ODK():
             return a
 
         def select_one(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = self.choices["label::English (en)"].loc[self.choices["list_name"].map(lambda x: x.strip())
-                                                        == x].loc[self.choices["name"] == value].iloc[0]
+            y = choices_dict[select][str(value).replace(".0", "")]
             return y
 
         def select_multiple(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = self.choices.loc[self.choices["list_name"].map(
-                lambda x: x.strip()) == x]
             z = []
-            for i in range(len(y)):
-                if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
-                    z.append(y["label::English (en)"].iloc[i])
+            for s in remove_tail(list(str(value).split(" "))):
+                z.append(choices_dict[select][str(s)])
             return " \n".join(z)
 
         def select_one_from_file(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = pd.read_csv(x)
-            z = y["label"].loc[y["name"] == value].iloc[0]
+            y = pd.read_csv(select)
+            z = y["label"].loc[y["name"] == str(value)].iloc[0]
             return z
 
         def select_multiple_from_file(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = pd.read_csv(x)
+            y = pd.read_csv(select)
             z = []
             for i in range(len(y)):
                 if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
                     z.append(y["label"].iloc[i])
             return " \n".join(z)
+
 
         func = {"select_one_from_file": select_one_from_file,
                 "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
@@ -763,20 +757,20 @@ class ODK():
             list(df.columns), self.get_group_repeat_names())
 
         for i in df.columns:
-            # try:
-            a = i
-            b = self.survey["type"].loc[self.survey["name"] == a]
+            b = self.survey["type"].loc[self.survey["name"] == i]
             if len(b) == 0:
                 pass
             else:
-                b = b.iloc[0].split(" ")[0]
-                if b in list(func.keys()):
+                c = b.iloc[0].split(" ")[0]
+                if c in list(func.keys()):
+                    choice_list_name = b.iloc[0].split(" ")[1]
                     for j in range(len(df)):
                         if pd.isna(df[i].iloc[j]):
                             pass
                         else:
                             try:
-                                df[i].iat[j] = func[b](a, df[i].iat[j])
+                                df[i].iat[j] = func[c](
+                                    choice_list_name, df[i].iat[j])
                             except:
                                 pass
 
@@ -816,6 +810,11 @@ class ODK():
         df = self.processing_submission() if type(data) == type(None) else data
         set_not_rejected = list(df["KEY"])
 
+        choices_dict = {}
+        for key in set(self.choices['list_name'].map(lambda x: x.strip())):
+            choices_dict[key] = dict(zip(self.choices["name"].loc[self.choices['list_name'].map(lambda x: x.strip()) == key].map(
+                str), self.choices["label::English (en)"].loc[self.choices['list_name'].map(lambda x: x.strip()) == key]))
+
         def remove_tail(list_in):
             a = []
             for j in list_in:
@@ -826,31 +825,30 @@ class ODK():
             return a
 
         def select_one(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = self.choices["label::English (en)"].loc[self.choices["list_name"]
-                                                        == x].loc[self.choices["name"] == value].iloc[0]
+            y = choices_dict[select][str(value).replace(".0", "")]
             return y
 
         def select_multiple(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = self.choices.loc[self.choices["list_name"] == x]
             z = []
-            for i in range(len(y)):
-                if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
-                    z.append(y["label::English (en)"].iloc[i])
+            for s in remove_tail(list(str(value).split(" "))):
+                z.append(choices_dict[select][str(s)])
             return " \n".join(z)
 
         def select_one_from_file(select, value):
-            x = self.survey["type"].loc[self.survey["name"] == select].iloc[0].split(" ")[
-                1]
-            y = pd.read_csv(x)
-            z = y["label"].loc[y["name"] == value].iloc[0]
+            y = pd.read_csv(select)
+            z = y["label"].loc[y["name"] == str(value)].iloc[0]
             return z
 
+        def select_multiple_from_file(select, value):
+            y = pd.read_csv(select)
+            z = []
+            for i in range(len(y)):
+                if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
+                    z.append(y["label"].iloc[i])
+            return " \n".join(z)
+
         func = {"select_one_from_file": select_one_from_file,
-                "select_one": select_one, "select_multiple": select_multiple}
+                "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
 
         group_names = self.get_group_repeat_names()
 
@@ -859,21 +857,21 @@ class ODK():
                 list(repeats[k].columns), group_names)
 
             for i in repeats[k].columns:
-                # try:
-                a = i
-                b = self.survey["type"].loc[self.survey["name"] == a]
+
+                b = self.survey["type"].loc[self.survey["name"] == i]
                 if len(b) == 0:
                     pass
                 else:
-                    b = b.iloc[0].split(" ")[0]
-                    if b in list(func.keys()):
+                    c = b.iloc[0].split(" ")[0]
+                    if c in list(func.keys()):
+                        choice_list_name = b.iloc[0].split(" ")[1]
                         for j in range(len(repeats[k])):
                             if pd.isna(repeats[k][i].iloc[j]):
                                 pass
                             else:
                                 try:
-                                    repeats[k][i].iat[j] = func[b](
-                                        a, repeats[k][i].iat[j])
+                                    repeats[k][i].iat[j] = func[c](
+                                        choice_list_name, repeats[k][i].iat[j])
                                 except:
                                     pass
 
