@@ -340,28 +340,30 @@ class Process_questionnaire():
             paragraph_format.space_after = Pt(paragraph_spacing_points)
             count = 0
             for j in range(len(column_labels)):
-                if not pd.isna(self.survey[column_labels[j]].iloc[index]):
-                    count += 1
+                if j in self.survey.columns:
+                    if (not pd.isna(self.survey[column_labels[j]].iloc[index])):
+                        count += 1
             for j in range(len(column_labels)):
-                if not pd.isna(self.survey[column_labels[j]].iloc[index]):
-                    run = paragraph.add_run(columns_names[j])
-                    run.italics = True
-                    run.font.color.rgb = RGBColor(50, 0, 255)
-                    if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
-                        run.font.size = Pt(8)
-                    if column_labels[j] == "constraint":
-                        run = paragraph.add_run(
-                            f"{process_current_input(process_enclosing_variables(str(self.survey[column_labels[j]].iloc[index])))}")
+                if j in self.survey.columns:
+                    if not pd.isna(self.survey[column_labels[j]].iloc[index]):
+                        run = paragraph.add_run(columns_names[j])
+                        run.italics = True
+                        run.font.color.rgb = RGBColor(50, 0, 255)
                         if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
                             run.font.size = Pt(8)
-                    else:
-                        run = paragraph.add_run(
-                            f"{process_enclosing_variables(str(self.survey[column_labels[j]].iloc[index]))}")
-                        if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
-                            run.font.size = Pt(8)
-                    count -= 1
-                    if count != 0:
-                        run = paragraph.add_run("\n")
+                        if column_labels[j] == "constraint":
+                            run = paragraph.add_run(
+                                f"{process_current_input(process_enclosing_variables(str(self.survey[column_labels[j]].iloc[index])))}")
+                            if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                                run.font.size = Pt(8)
+                        else:
+                            run = paragraph.add_run(
+                                f"{process_enclosing_variables(str(self.survey[column_labels[j]].iloc[index]))}")
+                            if self.survey["type"].iloc[index].split(" ")[0] == "calculate":
+                                run.font.size = Pt(8)
+                        count -= 1
+                        if count != 0:
+                            run = paragraph.add_run("\n")
 
         def cell_shading(index=None, index_counter=None, header_row=False):
             if index != None:
