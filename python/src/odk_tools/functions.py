@@ -29,19 +29,20 @@ def form_merge(form: Form, language="English (en)") -> pd.DataFrame:
     survey = form.survey
     out = subs
     for k, v in reps.items():
-        out = pd.merge(left=out.set_index(f"{'' if rstruct[k[len(form.form)+1:]] == None else rstruct[k[len(form.form)+1:]]+'-'}KEY", drop=False), right=v.rename(
-            columns={"KEY": f"{k[len(form.form)+1:]}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
-        drops = []
-        for j in range(len(out.columns)):
-            a = out.columns[j]
-            for i in range(len(out.columns)):
-                b = out.columns[i]
-                if (a[:-2] == b[:-2]) & (a[-2:] == '_x') & (b[-2:] == '_y'):
-                    out[a] = out[b]
-                    out.rename(columns={a: a[:-2]}, inplace=True)
-                    drops.append(b)
-        out.drop(columns=drops, inplace=True)
-        out.set_index("KEY", drop=False, inplace=True)
+        if len(v)>0:
+            out = pd.merge(left=out.set_index(f"{'' if rstruct[k[len(form.form)+1:]] == None else rstruct[k[len(form.form)+1:]]+'-'}KEY", drop=False), right=v.rename(
+                columns={"KEY": f"{k[len(form.form)+1:]}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
+            drops = []
+            for j in range(len(out.columns)):
+                a = out.columns[j]
+                for i in range(len(out.columns)):
+                    b = out.columns[i]
+                    if (a[:-2] == b[:-2]) & (a[-2:] == '_x') & (b[-2:] == '_y'):
+                        out[a] = out[b]
+                        out.rename(columns={a: a[:-2]}, inplace=True)
+                        drops.append(b)
+            out.drop(columns=drops, inplace=True)
+            out.set_index("KEY", drop=False, inplace=True)
 
     rep_key_columns = [i for i in out.columns if (
         (i.split("-")[-1] == "KEY") and (i[:-4] in list(rstruct.keys())))]
