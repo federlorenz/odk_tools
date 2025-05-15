@@ -30,8 +30,8 @@ def form_merge(form: Form, language="English (en)") -> pd.DataFrame:
     out = subs
     for k, v in reps.items():
         if len(v)>0:
-            out = pd.merge(left=out.set_index(f"{'' if rstruct[k[len(form.form)+1:]] == None else rstruct[k[len(form.form)+1:]]+'-'}KEY", drop=False), right=v.rename(
-                columns={"KEY": f"{k[len(form.form)+1:]}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
+            out = pd.merge(left=out.set_index(f"{'' if rstruct[k] == None else rstruct[k]+'-'}KEY", drop=False), right=v.rename(
+                columns={"KEY": f"{k}-KEY"}).set_index('PARENT_KEY'), how='outer', left_index=True, right_index=True)
             drops = []
             for j in range(len(out.columns)):
                 a = out.columns[j]

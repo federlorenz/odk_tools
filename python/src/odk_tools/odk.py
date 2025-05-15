@@ -24,7 +24,7 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 # %% #@ Functions
 
 
-def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=False, row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True, to_bytes=False):
+def save_to_excel(data = {}, filename="output.xlsx", column_width=25,  row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True, to_bytes=False):
 
     if to_bytes == True:
         workbook = xlsxwriter.Workbook(filename, {'in_memory': True})
@@ -32,37 +32,39 @@ def save_to_excel(data, filename="output.xlsx", column_width=25, include_index=F
         workbook = xlsxwriter.Workbook(filename)
 
     workbook.use_zip64()
-    
-    worksheet = workbook.add_worksheet()
 
-    for i in range(len(data.columns)):
-        worksheet.write(0, i, data.columns[i])
+    for k,v in data.items():
 
-    for i in range(len(data)):
-        for j in range(len(data.columns)):
-            if pd.isna(data.iloc[i, j]):
-                pass
-            else:
-                worksheet.write(i+1, j, data.iloc[i, j])
+        worksheet = workbook.add_worksheet(name=k)
 
-    worksheet.set_column(0, len(data.columns), width=column_width)
+        for i in range(len(v.columns)):
+            worksheet.write(0, i, v.columns[i])
 
-    for i in range(len(data)):
-        a = {}
-        if i in list(row_colours.keys()):
-            a["bg_color"] = row_colours[i]
-        if i in row_bold:
-            a["bold"] = True
-        if i in row_wrap:
-            a["text_wrap"] = True
-        if len(a) != 0:
-            worksheet.set_row(i, cell_format=workbook.add_format(a))
+        for i in range(len(v)):
+            for j in range(len(v.columns)):
+                if pd.isna(v.iloc[i, j]):
+                    pass
+                else:
+                    worksheet.write(i+1, j, v.iloc[i, j])
 
-    if autofilter:
-        worksheet.autofilter(1, 0, len(data), len(data.columns)-1)
+        worksheet.set_column(0, len(v.columns), width=column_width)
 
-    if freeze_panes:
-        worksheet.freeze_panes(2, 0)
+        for i in range(len(v)):
+            a = {}
+            if i in list(row_colours.keys()):
+                a["bg_color"] = row_colours[i]
+            if i in row_bold:
+                a["bold"] = True
+            if i in row_wrap:
+                a["text_wrap"] = True
+            if len(a) != 0:
+                worksheet.set_row(i, cell_format=workbook.add_format(a))
+
+        if autofilter:
+            worksheet.autofilter(1, 0, len(v), len(v.columns)-1)
+
+        if freeze_panes:
+            worksheet.freeze_panes(2, 0)
 
     workbook.close()
 
@@ -649,7 +651,7 @@ class ODK():
                                     sheet_name="settings")["form_id"].iloc[0])
 
         for j in self.survey["name"].loc[self.survey["type"] == "begin_repeat"]:
-            repeats[form_id+"-" + j] = pd.read_csv(zipfile.open(
+            repeats[j] = pd.read_csv(zipfile.open(
                 form_id+"-" + j+".csv"), na_values=[' ', ''], keep_default_na=False).dropna(how='all')
 
         return repeats
@@ -930,18 +932,16 @@ class ODK():
 
         return Form(submissions, survey, choices, settings, repeats, survey_name, form, variable, time_variable, media, attachments)
 
-    def save_main(self, data=None, path="", to_memory_filename=False):
+    def add_questions(self,data):
 
-        df = self.processing_submission() if type(data) == type(None) else data
+        df = copy.deepcopy(data)
 
-        df_out = copy.deepcopy(df)
-
-        for j in df_out.select_dtypes(include=['datetime64', 'datetimetz']).columns:
-            df_out[j] = df_out[j].astype(str)
-        if 'start' in df_out.columns:
-            df_out['start'] = df_out['start'].astype(str)
+        for j in df.select_dtypes(include=['datetime64', 'datetimetz']).columns:
+            df[j] = df[j].astype(str)
+        if 'start' in df.columns:
+            df['start'] = df['start'].astype(str)
         a = []
-        for j in df.columns:
+        for j in data.columns:
             if j in list(self.survey["name"]):
                 x = self.survey["label::English (en)"].loc[self.survey["name"]
                                                            == j].iloc[0]
@@ -949,47 +949,11 @@ class ODK():
             else:
                 a.append(np.nan)
 
-        df_out.loc[-1] = a
+        df.loc[-1] = a
+        df.sort_index(inplace=True)
 
-        df_out.sort_index(inplace=True)
+        return df
 
-        if to_memory_filename != False:
-            return save_to_excel(df_out, to_memory_filename, to_bytes=True)
-        else:
-            save_to_excel(df_out, path+self.form_name+"_submissions.xlsx")
-
-    def save_repeat(self, data=None, path="", to_memory_filename=False):
-
-        repeats = self.processing_repeats() if type(data) == type(None) else data
-
-        out = copy.deepcopy(to_memory_filename)
-
-        for k in repeats.keys():
-
-            rep_out = copy.deepcopy(repeats[k])
-
-            for j in rep_out.select_dtypes(include=['datetime64', 'datetimetz']).columns:
-                rep_out[j] = rep_out[j].astype(str)
-
-            a = []
-            for j in repeats[k].columns:
-                if j in list(self.survey["name"]):
-                    x = self.survey["label::English (en)"].loc[self.survey["name"]
-                                                               == j].iloc[0]
-                    a.append(x)
-                else:
-                    a.append(np.nan)
-
-            rep_out.loc[-1] = a
-
-            rep_out.sort_index(inplace=True)
-            if out != False:
-                out[k] = save_to_excel(rep_out, BytesIO(), to_bytes=True)
-            else:
-                save_to_excel(rep_out, path+k+".xlsx")
-
-        if to_memory_filename != False:
-            return out
 
     def save_data(self, path=""):
 
