@@ -23,7 +23,6 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 
 # %% #@ Functions
 
-
 def save_to_excel(data = {}, filename="output.xlsx", column_width=25,  row_colours={0: "#D8E4BC", 1: "#C5D9F1"}, row_bold=[0], row_wrap=[1], autofilter=True, freeze_panes=True, to_bytes=False):
 
     if to_bytes == True:
@@ -71,6 +70,7 @@ def save_to_excel(data = {}, filename="output.xlsx", column_width=25,  row_colou
     if to_bytes == True:
         return filename
 
+# %% #@ Classes
 
 class Process_questionnaire():
     def __init__(self):
@@ -442,8 +442,6 @@ class Process_questionnaire():
         else:
             document.save(
                 f"{self.form_title}{"" if (self.languages == None) else ("" if (language == None or language == "") else "-" + language.split(" ")[0])}-{"Version_"+str(self.form_version)}.docx")
-
-# %% #@ ODK Class
 
 class ODK():
 
@@ -954,7 +952,6 @@ class ODK():
 
         return df
 
-
     def save_data(self, path=""):
 
         req = requests.get(self.url+'/v1/projects/'+str(self.project) +
@@ -1023,23 +1020,33 @@ class ODK():
             return None
 
     def return_element(self, tree, data: str):
+        out = []
         for elem in tree.iter():
             if elem.tag == data:
-                return elem
+                out.append(elem)
             else:
                 pass
-        return None
+        if len(out) == 0:
+            return None
+        else:
+            return out
 
-    def modify_variable_xml(self, xml, variable: str, function):
+    def modify_variable_xml(self, xml, variable: str, function, mask=None):
         tree = ET.parse(BytesIO(xml))
-        d = self.return_element(tree, variable)
-        if d == None:
+        elements = self.return_element(tree, variable)
+        if mask == None:
+            mask = [True]*len(elements)
+        else:
+            mask = mask
+        if elements == None:
             print(f"{variable} is not in the xml")
             return xml
         else:
             try:
-                k = d.text
-                d.text = function(k)
+                for d in range(len(elements)):
+                    if mask[d] == True:
+                        k = elements[d].text
+                        elements[d].text = function(k)
                 xml_out = BytesIO()
                 tree.write(xml_out, encoding='utf-8')
                 return xml_out.getvalue()
