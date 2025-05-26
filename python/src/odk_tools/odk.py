@@ -342,11 +342,11 @@ class Process_questionnaire():
             paragraph_format.space_after = Pt(paragraph_spacing_points)
             count = 0
             for j in range(len(column_labels)):
-                if j in self.survey.columns:
+                if column_labels[j] in self.survey.columns:
                     if (not pd.isna(self.survey[column_labels[j]].iloc[index])):
                         count += 1
             for j in range(len(column_labels)):
-                if j in self.survey.columns:
+                if column_labels[j] in self.survey.columns:
                     if not pd.isna(self.survey[column_labels[j]].iloc[index]):
                         run = paragraph.add_run(columns_names[j])
                         run.italics = True
