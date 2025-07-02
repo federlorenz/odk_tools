@@ -913,7 +913,7 @@ class ODK():
 
         return repeats
 
-    def process_all(self, variable='', time_variable='start', process_datetimes=False):
+    def process_all(self, variable='', time_variable='start', process_datetimes=False, process_media=True):
 
         submissions = self.processing_submission(
             process_datetimes=process_datetimes)
@@ -925,7 +925,10 @@ class ODK():
         form = self.form
         variable = variable
         time_variable = time_variable
-        media = self.get_media()
+        if process_media:
+            media = self.get_media()
+        else:
+            media = None
         attachments = self.attachments
 
         return Form(submissions, survey, choices, settings, repeats, survey_name, form, variable, time_variable, media, attachments)
