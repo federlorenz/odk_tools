@@ -739,12 +739,12 @@ class ODK():
             return " \n".join(z)
 
         def select_one_from_file(select, value):
-            y = pd.read_csv(select)
-            z = y["label"].loc[y["name"] == str(value)].iloc[0]
+            y = self.attachments[select]
+            z = y["label"].loc[y["name"].map(str) == str(value)].iloc[0]
             return z
 
         def select_multiple_from_file(select, value):
-            y = pd.read_csv(select)
+            y = self.attachments[select]
             z = []
             for i in range(len(y)):
                 if str(y["name"].iloc[i]) in remove_tail(list(str(value).split(" "))):
@@ -1001,6 +1001,14 @@ class ODK():
                             str(self.project)+"/forms/" +
                             self.form+"/submissions/"+instance, data=data,
                             headers=self.headers))
+        return req
+
+    def create_submission(self, data):
+
+        req = requests.post(url=self.url+'/v1/projects/' +
+                            str(self.project)+"/forms/" +
+                            self.form+"/submissions", data=data,
+                            headers=self.headers)
         return req
 
     def get_parent_tag(self, tag):
