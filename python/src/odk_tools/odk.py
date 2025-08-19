@@ -1043,6 +1043,11 @@ class ODK():
             return out
 
     def modify_variable_xml(self, xml, variable: str, function, mask=None):
+        """
+        The argument "mask" is used to change values of a variable belonging to a repeat block.
+        "mask" is by default equal to "None". If left as default, all entries for such variable in the repeated block will be changed.
+        "mask" can also be set to a list of booleans (i.e. [True,False,True,True]), equal in length to the number of entries under the repeat group for the variable and the submission being edited. Entries that in order correspond to True are edited, entries that correspond to False are not.
+        """
         tree = ET.parse(BytesIO(xml))
         elements = self.return_element(tree, variable)
         if mask == None:
