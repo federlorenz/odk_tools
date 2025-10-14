@@ -20,6 +20,7 @@ from docx.oxml.ns import qn
 from docx.shared import RGBColor
 from docx.shared import Pt
 from docx.enum.table import WD_ALIGN_VERTICAL
+from chardet import detect
 
 # %% #@ Functions
 
@@ -671,11 +672,25 @@ class ODK():
 
         for j in req.json():
             if draft == False:
-                attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(
-                    ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments{j["name"]}", headers=self.headers)).content)
+                try:
+                    attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(
+                        ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments{j["name"]}", headers=self.headers)).content)
+                except UnicodeDecodeError:
+                    encoding = detect((requests.get(
+                        f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments/{j["name"]}", headers=self.headers)).content)["encoding"]
+                    attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments/{j["name"]}", headers=self.headers)).content), encoding=encoding) if j["name"].split(
+                        ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/versions/{version}/attachments{j["name"]}", headers=self.headers)).content)
+
             else:
-                attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(
-                    ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments{j["name"]}", headers=self.headers)).content)
+                try:
+                    attachments[j["name"]] = pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments/{j["name"]}", headers=self.headers)).content)) if j["name"].split(
+                        ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments{j["name"]}", headers=self.headers)).content)
+                except UnicodeDecodeError:
+                    encoding = detect((requests.get(
+                        f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments/{j["name"]}", headers=self.headers)).content)["encoding"]
+                    pd.read_csv(BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments/{j["name"]}", headers=self.headers)).content),encoding=encoding) if j["name"].split(
+                        ".")[-1] == "csv" else BytesIO((requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}/draft/attachments{j["name"]}", headers=self.headers)).content)
+                    
         return attachments
 
     def get_media(self):
