@@ -466,6 +466,7 @@ class ODK():
 
         self.token = req.json()["token"]
         self.headers = {'Authorization': 'Bearer '+self.token}
+        return self
 
     def set_target(self, project_name, form_name):
         self.project_name = project_name
@@ -480,6 +481,7 @@ class ODK():
         self.choiches = self.get_choices(draft=draft)
         self.settings = self.get_settings(draft=draft)
         self.attachments = self.get_attachments(draft=draft)
+        return self
 
     def list_projects(self, archived=False):
         req = requests.get(self.url+'/v1/projects', headers=self.headers)
