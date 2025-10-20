@@ -988,44 +988,30 @@ class ODK():
         file.write(req.content)
         file.close()
 
-    def listing_submissions(self):
+    def listing_submissions(self,draft=False):
 
-        req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.project)+"/forms/" +
-                            self.form+"/submissions",
+        req = (requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft==True else ""}/submissions",
                             headers=self.headers))
         return req.json()
 
-    def get_submission_metadata(self, instance):
+    def get_submission_metadata(self, instance, draft=False):
 
-        req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.project)+"/forms/" +
-                            self.form+"/submissions/"+instance,
-                            headers=self.headers))
+        req = (requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft == True else ""}/submissions/{instance}", headers=self.headers))
         return req.json()
 
-    def get_submission_xml(self, instance):
+    def get_submission_xml(self, instance,draft=False):
 
-        req = (requests.get(self.url+'/v1/projects/' +
-                            str(self.project)+"/forms/" +
-                            self.form+"/submissions/"+instance+".xml",
-                            headers=self.headers))
+        req = (requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft == True else ""}/submissions/{instance}.xml", headers=self.headers))
         return req.content
 
-    def put_submission(self, instance, data):
+    def put_submission(self, instance, data,draft=False):
 
-        req = (requests.put(url=self.url+'/v1/projects/' +
-                            str(self.project)+"/forms/" +
-                            self.form+"/submissions/"+instance, data=data,
-                            headers=self.headers))
+        req = (requests.put(url=f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft == True else ""}/submissions.{instance}", data=data, headers=self.headers))
         return req
 
-    def create_submission(self, data):
+    def create_submission(self, data, draft=False):
 
-        req = requests.post(url=self.url+'/v1/projects/' +
-                            str(self.project)+"/forms/" +
-                            self.form+"/submissions", data=data,
-                            headers=self.headers)
+        req = requests.post(url=f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft == True else ""}/submissions", data=data, headers=self.headers)
         return req
 
     def get_parent_tag(self, tag):
