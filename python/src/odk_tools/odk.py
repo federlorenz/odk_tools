@@ -1006,7 +1006,7 @@ class ODK():
 
     def put_submission(self, instance, data,draft=False):
 
-        req = (requests.put(url=f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft == True else ""}/submissions.{instance}", data=data, headers=self.headers))
+        req = (requests.put(url=f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft == True else ""}/submissions/{instance}", data=data, headers=self.headers))
         return req
 
     def create_submission(self, data, draft=False):
