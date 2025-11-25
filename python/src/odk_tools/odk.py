@@ -297,8 +297,8 @@ class Process_questionnaire():
             zipped = "\n".join(zipped)
             return zipped
 
-        def get_from_file(file):
-            choice_list = list(self.attachments[file]["label"].map(str))
+        def get_from_file(file,label="label"):
+            choice_list = list(self.attachments[file][label].map(str))
             if compress_long_choices:
                 if len(choice_list) > 50:
                     choice_list1 = choice_list[0:25]
@@ -306,6 +306,15 @@ class Process_questionnaire():
                     choice_list = choice_list1 + \
                         ["...The list is longer than 50, some elements are omitted..."]+choice_list2
             return "\n".join(choice_list)
+
+        def get_alternative_label_from_file(x):
+            if type(x) is float:
+                return "label"
+            y = x.split(",")
+            for i in y:
+                if "label" in i:
+                    return i.split("=")[1]
+            return "label"
 
         def process_enclosing_variables(data):
             x = findall(r"\${.+?}", data)
@@ -422,6 +431,8 @@ class Process_questionnaire():
                     run.italics = True
                     run.font.size = Pt(8)
 
+
+
                 process_string_only(
                     f"label{"" if (language == None or language == "") else ":"+language}", i, 2)
                 process_string_only(
@@ -431,8 +442,13 @@ class Process_questionnaire():
                     row_cells[4].text = get_choices(
                         s["type"].iloc[i].split(" ")[1])
                 elif (s["type"].iloc[i].split(" ")[0] == "select_one_from_file") or (s["type"].iloc[i].split(" ")[0] == "select_multiple_from_file"):
+                    if get_alternative_label_from_file(s["parameters"].iloc[i]) != None:
+                        label = get_alternative_label_from_file(
+                            s["parameters"].iloc[i])
+                    else:
+                        label="label"
                     row_cells[4].text = get_from_file(
-                        s["type"].iloc[i].split(" ")[1])
+                        s["type"].iloc[i].split(" ")[1],label=label)
                 else:
                     row_cells[4].text = ""
                 process_string_only_combined(row_cells, i)
