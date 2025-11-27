@@ -119,7 +119,7 @@ class Form():
 
         return Form(submissions, repeats=reps, media=media, survey_name=self.survey_name, form=self.form, variable=self.variable, time_variable=self.time_variable, survey=self.survey, choices=self.choices, settings=self.settings, attachments=self.attachments)
 
-    def pdf_summary(self, directory=''):
+    def pdf_summary(self, directory='',name=""):
 
         def filter_text(s, filter=["""<span style="color:red">""", "</span>", "**"]):
             for j in filter:
@@ -309,7 +309,7 @@ class Form():
                 pdf.ln(10)
             continue
 
-        pdf.output(directory+self.survey_name+'.pdf', 'F')
+        pdf.output(f"{directory}{self.survey_name if name=="" else name}.pdf")
 
     def add_headers(self, questions=True, variable=None):
         df = self.submissions
