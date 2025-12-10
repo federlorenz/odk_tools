@@ -1138,7 +1138,7 @@ class ODK():
                 child = ET.SubElement(root, variable)
             else:
                 child = ET.SubElement(
-                    self.return_element(tree, parent_tag), variable)
+                    self.return_element(tree, parent_tag)[0], variable)
             xml_out = BytesIO()
             tree.write(xml_out, encoding='utf-8')
             return xml_out.getvalue()
