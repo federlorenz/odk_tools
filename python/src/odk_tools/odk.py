@@ -784,9 +784,15 @@ class ODK():
                     z.append(y["label"].iloc[i])
             return " \n".join(z)
 
+        def rank(select, value):
+            z = []
+            for s in remove_tail(list(str(value).split(" "))):
+                z.append(choices_dict[select][str(s)])
+            return " \n".join(z)
 
         func = {"select_one_from_file": select_one_from_file,
-                "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
+                "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file,
+                "rank": rank}
 
         df.columns = self.removing_group_repeat_names(
             list(df.columns), self.get_group_repeat_names())
@@ -882,8 +888,15 @@ class ODK():
                     z.append(y["label"].iloc[i])
             return " \n".join(z)
 
+        def rank(select, value):
+            z = []
+            for s in remove_tail(list(str(value).split(" "))):
+                z.append(choices_dict[select][str(s)])
+            return " \n".join(z)
+
         func = {"select_one_from_file": select_one_from_file,
-                "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file}
+                "select_one": select_one, "select_multiple": select_multiple, "select_multiple_from_file": select_multiple_from_file,
+                "rank":rank}
 
         group_names = self.get_group_repeat_names()
 
