@@ -431,8 +431,6 @@ class Process_questionnaire():
                     run.italics = True
                     run.font.size = Pt(8)
 
-
-
                 process_string_only(
                     f"label{"" if (language == None or language == "") else ":"+language}", i, 2)
                 process_string_only(
@@ -442,7 +440,7 @@ class Process_questionnaire():
                     row_cells[4].text = get_choices(
                         s["type"].iloc[i].split(" ")[1])
                 elif (s["type"].iloc[i].split(" ")[0] == "select_one_from_file") or (s["type"].iloc[i].split(" ")[0] == "select_multiple_from_file"):
-                    if get_alternative_label_from_file(s["parameters"].iloc[i]) != None:
+                    if type(s["parameters"].iloc[i]) is str:
                         label = get_alternative_label_from_file(
                             s["parameters"].iloc[i])
                     else:
