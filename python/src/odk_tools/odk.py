@@ -913,15 +913,16 @@ class ODK():
                     c = b.iloc[0].split(" ")[0]
                     if c in list(func.keys()):
                         choice_list_name = b.iloc[0].split(" ")[1]
+                        new_data = []
                         for j in range(len(repeats[k])):
                             if pd.isna(repeats[k][i].iloc[j]):
-                                pass
+                                new_data.append("")
                             else:
                                 try:
-                                    repeats[k][i].iat[j] = func[c](
-                                        choice_list_name, repeats[k][i].iat[j])
+                                    new_data.append(func[c](choice_list_name, repeats[k][i].iat[j]))
                                 except:
-                                    pass
+                                    new_data.append(repeats[k][i].iat[j])
+                        repeats[k][i] = new_data
 
         for j in repeats.keys():
 
