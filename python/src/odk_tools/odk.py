@@ -1023,7 +1023,7 @@ class ODK():
         req = (requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft==True else ""}/submissions",
                             headers=self.headers))
         if get_ids:
-            return [[req.json()[i]["instanceId"] for i in range(len(req.json()))]]
+            return [req.json()[i]["instanceId"] for i in range(len(req.json()))]
         
         return req.json()
 
