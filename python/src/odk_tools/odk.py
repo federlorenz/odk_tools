@@ -1018,10 +1018,13 @@ class ODK():
         file.write(req.content)
         file.close()
 
-    def list_submissions(self,draft=False):
+    def list_submissions(self,draft=False, get_ids = False):
 
         req = (requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft==True else ""}/submissions",
                             headers=self.headers))
+        if get_ids:
+            return [[req.json()[i]["instanceId"] for i in range(len(req.json()))]]
+        
         return req.json()
 
     def get_submission_metadata(self, instance, draft=False):
