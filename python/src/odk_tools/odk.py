@@ -1018,7 +1018,7 @@ class ODK():
         file.write(req.content)
         file.close()
 
-    def listing_submissions(self,draft=False):
+    def list_submissions(self,draft=False):
 
         req = (requests.get(f"{self.url}/v1/projects/{str(self.project)}/forms/{self.form}{"/draft" if draft==True else ""}/submissions",
                             headers=self.headers))
