@@ -487,6 +487,30 @@ class ODK():
 
     def processing_repeats(self, data=None, process_datetimes=False):
 
+        def match_label(sheet):
+            if sheet == "choices":
+                if "label::English (en)" in self.choices.columns:
+                    return "label::English (en)"
+                elif "label:English (en)" in self.choices.columns:
+                    return "label:English (en)"
+                elif "label:: English (en)" in self.choices.columns:
+                    return "label:: English (en)"
+                elif "label: English (en)" in self.choices.columns:
+                    return "label: English (en)"
+                else:
+                    return "label"
+            if sheet == "survey":
+                if "label::English (en)" in self.survey.columns:
+                    return "label::English (en)"
+                elif "label:English (en)" in self.survey.columns:
+                    return "label:English (en)"
+                elif "label:: English (en)" in self.survey.columns:
+                    return "label:: English (en)"
+                elif "label: English (en)" in self.survey.columns:
+                    return "label: English (en)"
+                else:
+                    return "label"
+
         repeats = self.get_repeats()
         df = self.processing_submission() if type(data) == type(None) else data
         set_not_rejected = list(df["KEY"])
